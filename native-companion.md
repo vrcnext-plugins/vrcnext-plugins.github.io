@@ -94,7 +94,7 @@ ignored, so carrying presentation for an overlay the user does not run costs not
 
 ```ts
 const targets = await ctx.native.targets();
-// [{ name: 'wayvr', health: 'unknown', honours: ['height', 'opacity', ...], description: '...' }]
+// [{ name: 'wayvr', health: 'down', honours: ['height', 'opacity', ...], description: '...' }]
 ```
 
 Hard-coding `'wayvr'` works today and breaks the moment someone runs a different overlay. Each
