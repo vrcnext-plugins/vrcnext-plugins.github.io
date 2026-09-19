@@ -31,8 +31,8 @@ Most users will not have it installed. Every method degrades cleanly:
 own `code` and `status` — a `bad_request` there means the daemon is running fine and your request
 was wrong, which is also why a rejected request does **not** flip `available` to `false`.
 
-`notify()` deliberately does not reject. A missing companion is a normal state, not an exception,
-and a rejected promise inside an event handler is an unhandled rejection waiting to happen.
+A missing companion is a normal state, not an exception — and a rejected promise inside an event
+handler is an unhandled rejection waiting to happen, which is why `notify()` resolves instead.
 
 ### Await `ready`, do not read `available`, inside `activate`
 
