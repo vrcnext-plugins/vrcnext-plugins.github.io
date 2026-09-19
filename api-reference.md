@@ -145,6 +145,40 @@ interface OscApi {
 }
 ```
 
+## UI kit
+
+`ctx.ui.kit` — declarative builders that emit VRCNext's own markup. See [UI injection](ui.md).
+
+```ts
+type UiChild = Node | string | false | null | undefined;   // falsy children are dropped
+type UiBadgeTone = 'ok' | 'warn' | 'err' | 'accent' | 'cyan' | 'neutral';
+
+interface UiKit {
+  layout(...children: readonly UiChild[]): HTMLElement;
+  grid(children: readonly UiChild[], options?: { min?: number }): HTMLElement;
+  pair(first: UiChild, second: UiChild): HTMLElement;
+  card(options: { title?: string; icon?: IconName; children?: readonly UiChild[]; span?: number }): HTMLElement;
+  statusCard(options: { online: boolean; label: string; action?: Node }): HTMLElement;
+  section(label: string, children: readonly UiChild[]): DocumentFragment;
+
+  row(options: { label: string; value?: UiChild; detail?: string }): HTMLElement;
+  toggleRow(options: { label: string; value: boolean; onChange: (next: boolean) => void; detail?: string }): HTMLElement;
+  buttonRow(...children: readonly UiChild[]): HTMLElement;
+  button(options: { label: string; icon?: IconName; onClick: () => void; active?: boolean; disabled?: boolean; round?: boolean }): HTMLButtonElement;
+  textField(options: { value: string; placeholder?: string; onCommit: (next: string) => void }): HTMLInputElement;
+  dropdown(options: { options: readonly { value: string; label: string }[]; selected: string; onChange: (next: string) => void }): HTMLSelectElement;
+
+  badge(tone: UiBadgeTone, text: string): HTMLElement;
+  stat(options: { label: string; value: string; tone?: UiBadgeTone }): HTMLElement;
+  description(text: string): HTMLElement;
+  sectionLabel(text: string): HTMLElement;
+  valueText(text: string): HTMLElement;
+  emptyState(text: string): HTMLElement;
+
+  setChildren(parent: Node, children: readonly UiChild[]): void;
+}
+```
+
 ## Native companion
 
 ```ts
