@@ -6,6 +6,24 @@ title: OSC
 
 [← Back to index](./)
 
+> ## OSC is Windows-only in VRCNext
+>
+> `MessageRouter.IsWindowsOnlyAction` drops any action starting with `osc` followed by an
+> uppercase letter, so **`oscSend`, `oscSendRaw`, `oscConnect` and `oscDisconnect` never reach
+> the backend on Linux.** VRCNext hides its own OSC Tool tab there, and its Action Flow OSC
+> blocks are equally inert — they emit the same two actions.
+>
+> There is no workaround from the page. Guard your code:
+>
+> ```ts
+> if (!ctx.osc.available) {
+>   ctx.logger.info('OSC needs Windows; skipping.');
+>   return;
+> }
+> ```
+>
+> Calls made when `available` is `false` log a warning rather than failing silently.
+
 VRCNext owns the OSC sockets: it sends to `127.0.0.1:9000`, listens on `9001` with
 `SO_REUSEADDR`, and advertises an extra receive port over OSCQuery. Plugins do **not** open
 sockets — they ask VRCNext to send and subscribe to what it receives. That keeps one OSCQuery
@@ -47,6 +65,7 @@ with `hasInput` / `hasOutput` flags.
 
 ## Caveats
 
+- **`available` is `false` on Linux** — see the warning above. This is the first thing to check.
 - **Parameters arrive only while OSC is enabled in VRChat.** If nothing fires, OSC is off in the
   VRChat radial menu, or another app has bound 9001 without `SO_REUSEADDR`.
 - `onParam` can fire *very* often — dozens of times a second with a parameter-heavy avatar.

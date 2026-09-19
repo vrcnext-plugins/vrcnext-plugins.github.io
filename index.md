@@ -27,7 +27,6 @@ export default definePlugin({
     ctx.gameLog.onType('OnPlayerJoined', (entry) => {
       ctx.notifications.toast({ message: `${entry.detail} joined.` });
     });
-    ctx.osc.send('VRCEmote', 'int', 3);
   },
 });
 ```
@@ -41,10 +40,10 @@ the repo URL into the Plugins tab.
 | :--- | :--- |
 | ~310 VRCNext host events, verified payloads typed | `ctx.events` |
 | ~474 backend actions, with request/response and outbound interception | `ctx.bridge` |
-| OSC send and receive through VRCNext's sockets | `ctx.osc` |
+| OSC send and receive through VRCNext's sockets *(Windows only)* | `ctx.osc` |
 | VRChat game log stream and backlog | `ctx.gameLog` |
 | Sidebar tabs, dashboard cards, settings cards, custom CSS | `ctx.ui` |
-| In-app toasts, OS tray toasts, SteamVR wrist overlay, confirm modals | `ctx.notifications` |
+| In-app toasts and confirm modals; OS tray + SteamVR overlay *(Windows only)* | `ctx.notifications` |
 | Context-menu items, dividers and submenus | `ctx.contextMenu` |
 | In-page HTTP routes with path parameters | `ctx.router` |
 | Deep links VRCNext delivers | `ctx.deepLinks` |
@@ -95,6 +94,9 @@ otherwise:
    drops anything else before the page ever sees it.
 3. **Writing to VRCNext's log file.** There is no page→C# action that logs arbitrary text. The
    Logs panel and its download button are the supported equivalent.
+
+Separately, several VRCNext features are **Windows-only in VRCNext itself** — OSC, the VR
+overlay, the chatbox and more. See the [platform matrix](limitations.md).
 
 Everything else on this site is implemented and type-checked against VRCNext **2026.60.5**.
 

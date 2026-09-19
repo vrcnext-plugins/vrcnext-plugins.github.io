@@ -20,6 +20,33 @@ VRCNext source at 2026.60.5 rather than assumed.
 | **Interleaving context-menu items** | `getMenuConfig` is module-closure-scoped; contributions are appended after VRCNext's own items. |
 | **New OSC ports** | VRCNext owns the sockets. Plugins send and receive through it, sharing one OSCQuery advertisement. |
 
+## Windows-only in VRCNext
+
+`MessageRouter.IsWindowsOnlyAction` drops any action whose name starts with one of these
+prefixes **followed by an uppercase letter**, before it reaches any handler. On Linux the whole
+feature is unreachable from the page, and VRCNext hides the matching sidebar entries.
+
+| Prefix | Feature | Plugin impact |
+| :--- | :--- | :--- |
+| `osc` | OSC Tool | **`ctx.osc` is inert** — check `ctx.osc.available` |
+| `vro` | VR wrist overlay | `ctx.notifications.desktop()` no-ops |
+| `chatbox` | Custom Chatbox | `ctx.bridge.send('chatbox…')` dropped |
+| `vf` | Voice Fight | dropped |
+| `kxd` | Kikitan XD (STT) | dropped |
+| `sf` / `st` / `fs` | Space Flight / Space Turn / FrameShot | dropped |
+| `dp` | Discord Presence | dropped |
+| `vc` | VRCVideoCacher | dropped |
+| `as` | Avatar Scaling | dropped |
+
+`startRelay` / `stopRelay` (Media Relay) are filtered by exact name as well.
+
+`afTrayNotify` is **not** in the prefix list, so it reaches its handler on Linux — but the tray
+and overlay work inside it is `#if WINDOWS`, so nothing happens. That is why
+`ctx.notifications.desktopAvailable` exists.
+
+Everything else — events, the bridge's non-prefixed actions, the game log, UI, context menus,
+routes, settings, logging — works on both platforms.
+
 ## Fragile by nature
 
 These work, but depend on VRCNext internals with no stability guarantee:

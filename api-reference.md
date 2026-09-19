@@ -132,6 +132,7 @@ interface ContextMenuApi {
 
 ```ts
 interface OscApi {
+  readonly available: boolean;   // false on Linux — VRCNext filters every osc* action
   connect(): void;
   disconnect(): void;
   send(name: string, kind: 'bool', value: boolean): void;
