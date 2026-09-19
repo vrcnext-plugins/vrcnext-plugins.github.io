@@ -35,6 +35,7 @@ interface VrcnextPlugin<S> {
 | `ui` | `UiApi` |
 | `notifications` | `NotificationsApi` |
 | `osc` | `OscApi` |
+| `native` | `NativeApi` |
 | `gameLog` | `GameLogApi` |
 | `deepLinks` | `DeepLinkApi` |
 | `router` | `RouterApi` |
@@ -143,6 +144,60 @@ interface OscApi {
   onAvatarChange(listener: (event: OscAvatarChangeEvent) => void): () => void;
 }
 ```
+
+## Native companion
+
+```ts
+interface NativeApi {
+  readonly available: boolean;        // synchronous snapshot of the last probe
+  readonly ready: Promise<boolean>;   // the boot probe — await this inside activate()
+  readonly endpoint: string;
+  probe(): Promise<boolean>;
+  describe(): Promise<NativeDescription | undefined>;
+  targets(): Promise<readonly NativeTarget[]>;
+  notify(options: NativeNotifyOptions): Promise<NativeNotifyResult>;
+  call(service: string, method: string, params?: unknown): Promise<unknown>;
+}
+
+interface NativeTarget {
+  readonly name: string;                            // 'wayvr', 'freedesktop', …
+  readonly description: string;
+  readonly health: 'up' | 'unknown' | 'down';
+  readonly honours: readonly string[];              // which fields this target actually uses
+}
+
+interface NativeNotifyOptions extends NativeNotifyFields {
+  readonly title: string;                           // required
+  readonly sinks?: readonly string[];               // omit for every target
+  readonly overrides?: Readonly<Record<string, NativeNotifyOverride>>;
+}
+
+// Shared by a request and its per-target overrides.
+interface NativeNotifyFields {
+  readonly content?: string;
+  readonly timeoutSecs?: number;
+  readonly icon?: string;
+  readonly useBase64Icon?: boolean;
+  readonly sourceApp?: string;
+  readonly sound?: boolean;
+  readonly volume?: number;
+  readonly audioPath?: string;
+  readonly height?: number;      // VR overlays only
+  readonly opacity?: number;     // VR overlays only
+  readonly urgency?: 'low' | 'normal' | 'critical';  // desktop daemons only
+  readonly alwaysShow?: boolean; // VR overlays only
+}
+
+interface NativeNotifyResult {
+  readonly ok: boolean;          // true if at least one target accepted
+  readonly delivered: readonly string[];
+  readonly failed: readonly { readonly sink: string; readonly error: string }[];
+}
+```
+
+Every method degrades cleanly when the companion is absent — `notify()` resolves with
+`ok: false` rather than rejecting. Only `call()` rejects, with an error carrying the companion's
+own `code` and `status`. See [Native companion](native-companion.md).
 
 ## Game log
 

@@ -20,24 +20,42 @@ Most users will not have it installed. Every method degrades cleanly:
 | Method | Without the companion |
 | :--- | :--- |
 | `available` | `false` |
+| `ready` | resolves `false` |
 | `probe()` | resolves `false` |
 | `describe()` | resolves `undefined` |
 | `targets()` | resolves `[]` |
 | `notify()` | resolves `{ ok: false, delivered: [], failed: [] }` |
 | `call()` | **rejects** |
 
+`notify()` and `targets()` never reject. Only `call()` does, and its error carries the companion's
+own `code` and `status` — a `bad_request` there means the daemon is running fine and your request
+was wrong, which is also why a rejected request does **not** flip `available` to `false`.
+
 `notify()` deliberately does not reject. A missing companion is a normal state, not an exception,
 and a rejected promise inside an event handler is an unhandled rejection waiting to happen.
 
+### Await `ready`, do not read `available`, inside `activate`
+
+This is the one easy mistake. The host probes the companion at boot, and that probe is usually
+**still in flight** when your plugin activates. `available` is a synchronous snapshot of it, so
+branching on it there is a race — true if the daemon answers quickly, false if it does not, and
+your VR notifications vanish with no error.
+
 ```ts
-if (!ctx.native.available) {
+// Correct: one shared probe, awaited.
+if (!(await ctx.native.ready)) {
   ctx.logger.info('No companion; skipping VR notifications.');
   return;
 }
 ```
 
-Check `available` before you render a VR-notification toggle in a settings panel, so the user is
-not shown a switch that silently does nothing.
+```ts
+// Racy: may be false purely because the probe has not come back yet.
+if (!ctx.native.available) return;
+```
+
+`available` is the right choice *later* — in a settings panel, say, where you want to render the
+current state without awaiting anything. `ready` resolves once and is shared between all readers.
 
 ## Targeting
 
@@ -138,6 +156,12 @@ Requests are validated and bounded by the companion. Exceeding a limit produces 
 There is also a rate limit — 5/s with a burst of 10 by default. A notification puts pixels in front
 of someone wearing a headset; a runaway loop is otherwise an accident that needs them to take it
 off.
+
+## If you moved the daemon
+
+The bridge's `--listen` is configurable, so the host's endpoint is too. **Plugins → Plugin
+System → Native companion** has an editable *Endpoint* field; changing it re-probes immediately and
+remembers the choice. `ctx.native.endpoint` reports where the host is currently looking.
 
 ## Installing it
 
