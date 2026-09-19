@@ -9,6 +9,15 @@ title: UI injection
 All UI is built from **VRCNext's own CSS classes**, so plugin panels inherit the user's theme,
 font-size offset and any active custom theme. Hand-rolling a `<button>` loses all three.
 
+## Where plugin UI appears
+
+Installing the host adds a **Plugins** group to the sidebar (a divider plus a puzzle-piece
+entry) and mirrors it as a **Plugins** menu in the top bar. Both drive the same three tabs:
+**Manage Plugins**, **Logs**, and **Plugin System**.
+
+Your plugin's own `addNavTab` entries are separate top-level sidebar buttons — they are not
+placed inside that group.
+
 ## Sidebar tab
 
 ```ts
@@ -23,8 +32,9 @@ ctx.ui.addNavTab({
 
 `render` is called **once, lazily**, the first time the tab is opened.
 
-VRCNext rebuilds its sidebar whenever the nav editor saves, which drops injected buttons. The
-host re-attaches via a `MutationObserver` — no polling, no lost button.
+VRCNext's `navRender()` does `navEl.innerHTML = ''` whenever the nav editor saves or the layout
+changes, which drops injected buttons entirely. The host re-attaches via a `MutationObserver` —
+no polling, no lost button.
 
 ## Dashboard card
 
