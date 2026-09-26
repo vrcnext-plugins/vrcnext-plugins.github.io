@@ -10,7 +10,7 @@ title: Using TSX
 
 ## VRCNext uses no framework at all
 
-Verified against VRCNext 2026.60.5: no React, no Preact, no Vue, no JSX anywhere. No `.tsx` or
+Verified against VRCNext 2026.61.2: no React, no Preact, no Vue, no JSX anywhere. No `.tsx` or
 `.jsx` files, no `package.json`, no bundler. The entire frontend is hand-written vanilla
 JavaScript, loaded as plain `<script>` tags, manipulating the DOM directly.
 
@@ -99,7 +99,7 @@ export default definePlugin({
       icon: 'extension',
       render: (tab) => { mountStats(tab, joins); },
     });
-    ctx.gameLog.onType('OnPlayerJoined', () => { joins += 1; });
+    ctx.gameLog.onType('gl_player_join', () => { joins += 1; });
   },
 });
 ```

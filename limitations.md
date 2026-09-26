@@ -7,7 +7,7 @@ title: Limitations
 [← Back to index](./)
 
 An honest list of what this system **cannot** do, and why. Each VRCNext entry was verified
-against the VRCNext source at 2026.60.5 rather than assumed.
+against the VRCNext source at 2026.61.2 rather than assumed.
 
 ## Impossible without patching VRCNext
 

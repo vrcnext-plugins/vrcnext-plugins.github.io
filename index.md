@@ -30,8 +30,8 @@ import { definePlugin, type PluginId } from '@vrcnext/plugin-api';
 export default definePlugin({
   id: 'my-plugin' as PluginId,
   activate(ctx) {
-    ctx.gameLog.onType('OnPlayerJoined', (entry) => {
-      ctx.ui.toast({ message: `${entry.detail} joined.` });
+    ctx.gameLog.onType('gl_player_join', (entry) => {
+      ctx.notifications.toast({ message: `${entry.message} joined.` });
     });
   },
 });
@@ -114,7 +114,7 @@ overlay, the chatbox and more. See the [platform matrix](limitations.md). For no
 there is a way around this: the [VRCNext Bridge](native-companion.md) reaches VR overlays and the desktop
 on any platform, because it is a separate process rather than the page.
 
-Everything else on this site is implemented and type-checked against VRCNext **2026.60.5**.
+Everything else on this site is implemented and type-checked against VRCNext **2026.61.2**.
 
 ## Repositories
 

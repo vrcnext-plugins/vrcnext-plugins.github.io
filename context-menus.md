@@ -50,7 +50,12 @@ ctx.contextMenu.contribute((target) => [
 ctx.contextMenu.contributeFor('.friend-row', (target) => [ /* … */ ]);
 ```
 
-`target.entity` is populated when VRCNext tagged the element with a VRChat entity:
+`target.entity` is populated when a VRChat entity can be read off the clicked element or one of
+its ancestors. VRCNext carries ids in inline `onclick` handlers (`openFriendDetail('usr_…')`,
+`navOpenModal('world','wrld_…')`) and in `data-*` attributes (`data-uid`, `data-wid`,
+`data-avid`, `data-gid`, `data-location`, …); the host reads both, nearest ancestor first, and
+derives the type from the id prefix. An instance location (`wrld_…:12345~…`) resolves as
+`{ type: 'instance', id: location }`.
 
 ```ts
 if (target.entity?.type === 'user') {
