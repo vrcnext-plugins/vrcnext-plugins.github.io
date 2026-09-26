@@ -103,7 +103,7 @@ specifically there is a way around this: the optional
 [native companion](native-companion.md) reaches VR overlays and the desktop on any platform,
 because it is a separate process rather than the page.
 
-Everything else on this site is implemented and type-checked against VRCNext **2026.60.5**.
+Everything else on this site is implemented and type-checked against VRCNext **2026.61.2**.
 
 ## Repositories
 

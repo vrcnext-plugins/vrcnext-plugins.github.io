@@ -7,7 +7,7 @@ title: Limitations
 [← Back to index](./)
 
 An honest list of what this host **cannot** do, and why. Each entry was verified against the
-VRCNext source at 2026.60.5 rather than assumed.
+VRCNext source at 2026.61.2 rather than assumed.
 
 ## Impossible without patching VRCNext
 
