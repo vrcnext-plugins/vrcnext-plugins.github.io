@@ -59,6 +59,17 @@ a message telling the user to update.
 Only `https://`. Traversal segments are rejected before URL parsing, so a normalising `..`
 cannot silently retarget a different repository.
 
+A self-hosted Gitea must have CORS enabled, because the fetch comes from the VRCNext page on
+`http://localhost:<port>`. Gitea only sends CORS headers on its API, so the host reads files
+through `/api/v1/repos/<owner>/<repo>/raw/<path>?ref=<branch>`. In `app.ini`:
+
+```ini
+[cors]
+ENABLED = true
+ALLOW_DOMAIN = *
+METHODS = GET,HEAD,OPTIONS
+```
+
 ## Commit your `dist/`
 
 Users fetch the built file directly — the host never runs your build. If `dist/` is gitignored,
