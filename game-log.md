@@ -15,8 +15,8 @@ ctx.gameLog.on((entry) => {
   ctx.logger.info(`${entry.type}: ${entry.message}`);
 });
 
-ctx.gameLog.onType('OnPlayerJoined', (entry) => {
-  ctx.ui.toast({ message: `${entry.detail} joined.` });
+ctx.gameLog.onType('gl_player_join', (entry) => {
+  ctx.ui.toast({ message: `${entry.message} joined.` });   // detail is the usr_… id
 });
 
 const backlog = await ctx.gameLog.history(ctx.signal);   // up to 1000 entries
@@ -26,7 +26,7 @@ const backlog = await ctx.gameLog.history(ctx.signal);   // up to 1000 entries
 
 ```ts
 interface GameLogEntry {
-  readonly type: string;       // e.g. 'OnPlayerJoined' — not a closed set
+  readonly type: string;       // e.g. 'gl_player_join' — not a closed set
   readonly timestamp: string;  // exactly as VRCNext emitted it
   readonly message: string;
   readonly detail: string;
@@ -35,7 +35,22 @@ interface GameLogEntry {
 
 `type` is deliberately `string`. VRCNext's parser adds entry kinds between releases, and a
 literal union would be wrong the moment it did. Compare against the strings you care about and
-ignore the rest.
+ignore the rest. The kinds VRCNext 2026.61.2 emits, with what `message` and `detail` carry:
+
+| `type` | `message` | `detail` |
+| :--- | :--- | :--- |
+| `gl_player_join` | display name | `usr_…` id, or empty for legacy accounts |
+| `gl_player_left` | display name | `usr_…` id, or empty |
+| `gl_world_join` | world name | `wrld_…` id |
+| `gl_instance_closed` | location | |
+| `gl_avatar_blocked` | display name | avatar name |
+| `gl_portal` | portal text | |
+| `gl_video_url` | URL | |
+| `gl_screenshot` | file path | |
+| `gl_image_error` | URL | |
+| `gl_connection_lost` | reason | |
+
+These are exported as `GAME_LOG_TYPES` for autocomplete; they are not the type of `entry.type`.
 
 ## Caveats
 

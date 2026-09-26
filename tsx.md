@@ -82,7 +82,7 @@ export default definePlugin({
       icon: 'extension',
       render: (tab) => { mountStats(tab, joins); },
     });
-    ctx.gameLog.onType('OnPlayerJoined', () => { joins += 1; });
+    ctx.gameLog.onType('gl_player_join', () => { joins += 1; });
   },
 });
 ```
