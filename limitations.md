@@ -29,7 +29,6 @@ against the VRCNext source at 2026.60.5 rather than assumed.
 | **Reaching `window`, `fetch`, `localStorage`, …** | Refused at install by the source policy, so that everything a plugin does outside its own panels goes through `ctx.*` and the [permission gate](permissions.md) can see it. |
 | **A sandbox** | A plugin is compiled into the same bundle as the host and runs with the page's authority. Permissions and the policy make what it does declared and confirmed; they do not contain a plugin that is determined to misbehave. See [Security model](security.md). |
 | **Silent installs** | Install, update and uninstall are confirmed natively — a notification on Linux, a message box on Windows — because the page cannot be trusted to confirm code being added to itself. Without a prompt channel the bridge refuses. |
-| **`dependencies` in `plugin.json`** | The host parser accepts it; the bridge's manifest schema does not yet, and it refuses unknown fields. |
 
 ## Windows-only in VRCNext
 

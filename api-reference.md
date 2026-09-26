@@ -97,7 +97,7 @@ interface PluginSummary {
 }
 interface PluginManifest extends PluginSummary {
   readonly apiVersion: string; readonly author?: string; readonly homepage?: string;
-  readonly dependencies?: readonly PluginId[];        // not accepted by the bridge yet
+  readonly dependencies?: readonly PluginId[];        // activation order
 }
 function parsePluginManifest(raw: unknown): ManifestParseResult;   // { manifest | undefined, errors }
 ```

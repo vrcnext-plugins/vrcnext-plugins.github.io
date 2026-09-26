@@ -45,7 +45,7 @@ of problems the UI shows verbatim.
 | `actions` | Exact VRCNext action names `ctx.bridge` may send without a prompt. Needs `host:actions`. |
 | `events` | Exact host event names `ctx.events` may subscribe to without a prompt. Needs `host:events`. `openDeepLink` here covers `ctx.deepLinks`. |
 | `hosts` | Exact hosts `ctx.http.fetch` may reach without a prompt. Bare host names, optionally with a port; no scheme, no path, no wildcards. Needs `network`. |
-| `dependencies` | Optional in the host parser: ids of plugins that must be running before this one activates. **The bridge does not accept it yet** — its manifest schema has no such field and refuses unknown fields — so a manifest that uses it is refused at install. |
+| `dependencies` | Optional: ids of plugins that must be enabled before this one activates. The host orders activation by these; a plugin cannot depend on itself. |
 
 Lists are de-duplicated; empty or non-string entries are errors. An unknown permission name is an
 error, not a warning — the vocabulary is fixed.
