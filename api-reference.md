@@ -158,7 +158,7 @@ interface UiKit {
   grid(children: readonly UiChild[], options?: { min?: number }): HTMLElement;
   pair(first: UiChild, second: UiChild): HTMLElement;
   card(options: { title?: string; icon?: IconName; children?: readonly UiChild[]; span?: number }): HTMLElement;
-  statusCard(options: { online: boolean; label: string; action?: Node }): HTMLElement;
+  statusCard(options: { tone: 'online' | 'warn' | 'offline'; label: string; action?: Node }): HTMLElement;
   section(label: string, children: readonly UiChild[]): DocumentFragment;
 
   row(options: { label: string; value?: UiChild; detail?: string }): HTMLElement;
@@ -179,11 +179,14 @@ interface UiKit {
 }
 ```
 
-## Native companion
+## VRCNext Bridge
 
 ```ts
+type NativeStatus = 'not_detected' | 'running_not_connected' | 'connected';
+
 interface NativeApi {
-  readonly available: boolean;        // synchronous snapshot of the last probe
+  readonly available: boolean;        // detected: health answered, or the socket is open
+  readonly status: NativeStatus;      // the finer answer, for a status indicator
   readonly ready: Promise<boolean>;   // the boot probe — await this inside activate()
   readonly endpoint: string;
   probe(): Promise<boolean>;
@@ -229,9 +232,9 @@ interface NativeNotifyResult {
 }
 ```
 
-Every method degrades cleanly when the companion is absent — `notify()` resolves with
-`ok: false` rather than rejecting. Only `call()` rejects, with an error carrying the companion's
-own `code` and `status`. See [Native companion](native-companion.md).
+Every method degrades cleanly when the bridge is absent — `notify()` resolves with `ok: false`
+rather than rejecting. Only `call()` rejects, with an error carrying the bridge's own `code`. See
+[VRCNext Bridge](native-companion.md).
 
 ## Game log
 

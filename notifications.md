@@ -100,7 +100,7 @@ Everything above goes through VRCNext, which means it inherits VRCNext's platfor
 toast and the SteamVR overlay are Windows-only, and `ctx.notifications.desktopAvailable` is `false`
 on Linux.
 
-The [native companion](native-companion.md) is the way around that. It is a separate local process,
+The [VRCNext Bridge](native-companion.md) is the way around that. It is a separate local process,
 so it is not subject to VRCNext's gating, and it can address a VR overlay and the desktop
 notification daemon as separate targets:
 

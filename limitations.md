@@ -48,12 +48,12 @@ and overlay work inside it is `#if WINDOWS`, so nothing happens. That is why
 
 These gates are in VRCNext, and the page cannot escape them. A **separate process** is not subject
 to them at all — which is what the optional
-[native companion](native-companion.md) is. `ctx.native` reaches VR overlays and the desktop
+[VRCNext Bridge](native-companion.md) is. `ctx.native` reaches VR overlays and the desktop
 notification daemon on Linux and Windows alike, because the daemon talks to them directly rather
 than asking VRCNext to.
 
 It is a workaround for notifications only. OSC stays gated: `ctx.osc` goes through VRCNext's own
-sockets, and no companion service exposes OSC today.
+sockets, and no bridge service exposes OSC today.
 
 Everything else — events, the bridge's non-prefixed actions, the game log, UI, context menus,
 routes, settings, logging — works on both platforms.

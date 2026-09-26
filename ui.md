@@ -131,7 +131,7 @@ container.append(
 | `k.grid(children, { min })` | A responsive grid of cards. Fits as many columns of at least `min` px (default 280) as the width allows. |
 | `k.pair(a, b)` | Exactly two cards, side by side. |
 | `k.card({ title, icon, children, span })` | A `vrcn-panel-card`. `span` makes it occupy several grid columns. |
-| `k.statusCard({ online, label, action })` | The dot-and-label strip VRCNext uses atop its tool tabs. |
+| `k.statusCard({ tone, label, action })` | The dot-and-label strip VRCNext uses atop its tool tabs. `tone` is `online`, `warn` or `offline`. |
 | `k.section(label, children)` | An uppercase label followed by its rows. |
 
 **Prefer `k.grid` over a stack of full-width cards.** Most cards are short key/value lists, and a

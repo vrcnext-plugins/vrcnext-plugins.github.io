@@ -68,7 +68,7 @@ the repo URL into the Plugins tab.
 | [Events & the bridge](events-and-bridge.md) | Host events, sending actions, interception. |
 | [UI injection](ui.md) | Nav tabs, dashboard cards, settings cards, CSS. |
 | [Notifications](notifications.md) | In-app, desktop tray, **SteamVR overlay**, confirm modals. |
-| [Native companion](native-companion.md) | VR overlay and desktop targets, per-target overrides. |
+| [VRCNext Bridge](native-companion.md) | VR overlay and desktop targets, per-target overrides. |
 | [Context menus](context-menus.md) | Items, dividers, submenus, entity targets. |
 | [OSC](osc.md) | Sending and receiving OSC through VRCNext. |
 | [Game log](game-log.md) | The VRChat log stream and backlog. |
@@ -100,7 +100,7 @@ otherwise:
 Separately, several VRCNext features are **Windows-only in VRCNext itself** — OSC, the VR
 overlay, the chatbox and more. See the [platform matrix](limitations.md). For notifications
 specifically there is a way around this: the optional
-[native companion](native-companion.md) reaches VR overlays and the desktop on any platform,
+[VRCNext Bridge](native-companion.md) reaches VR overlays and the desktop on any platform,
 because it is a separate process rather than the page.
 
 Everything else on this site is implemented and type-checked against VRCNext **2026.60.5**.
@@ -110,7 +110,7 @@ Everything else on this site is implemented and type-checked against VRCNext **2
 | Repository | Purpose |
 | :--- | :--- |
 | [vrcnext-plugin-system](https://github.com/vrcnext-plugins/vrcnext-plugin-system) | The runtime, the typed `@vrcnext/plugin-api` contract, and the installer. |
-| [vrcnext-bridge](https://github.com/vrcnext-plugins/vrcnext-bridge) | The optional native companion daemon. Rust, loopback only. |
+| [vrcnext-bridge](https://github.com/vrcnext-plugins/vrcnext-bridge) | The optional native companion daemon. Rust, loopback only, one WebSocket. |
 | [vrcnext-plugins.github.io](https://github.com/vrcnext-plugins/vrcnext-plugins.github.io) | This site. |
 
 ## A note on trust
