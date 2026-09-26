@@ -6,8 +6,10 @@ title: API reference
 
 [← Back to index](./)
 
-Everything exported from `@vrcnext/plugin-api`. Types are authoritative in the package; this is
-the map.
+Everything exported from `@vrcnext/plugin-api` (version **0.2.0**). Types are authoritative in
+the package; this is the map. The package is types plus a little pure logic — manifest parsing,
+the permission vocabulary, semver, settings defaults — with no DOM and no host dependency, so
+you can unit-test against it.
 
 ## Entry
 
@@ -15,7 +17,7 @@ the map.
 function definePlugin<const S extends SettingsSchema>(plugin: VrcnextPlugin<S>): VrcnextPlugin<S>;
 
 interface VrcnextPlugin<S> {
-  readonly id: PluginId;
+  readonly id: PluginId;               // must equal "id" in plugin.json
   readonly settings?: S;
   activate(ctx: PluginContext<S>): void | Promise<void>;
   deactivate?(): void | Promise<void>;
@@ -24,35 +26,102 @@ interface VrcnextPlugin<S> {
 
 ## `PluginContext`
 
-| Member | Type |
-| :--- | :--- |
-| `id` | `PluginId` |
-| `version` | `string` |
-| `logger` | `Logger` |
-| `settings` | `SettingsStore<S>` |
-| `events` | `EventBus` |
-| `bridge` | `Bridge` |
-| `ui` | `UiApi` |
-| `notifications` | `NotificationsApi` |
-| `osc` | `OscApi` |
-| `native` | `NativeApi` |
-| `gameLog` | `GameLogApi` |
-| `deepLinks` | `DeepLinkApi` |
-| `router` | `RouterApi` |
-| `contextMenu` | `ContextMenuApi` |
-| `disposables` | `DisposableBag` |
-| `signal` | `AbortSignal` |
+| Member | Type | Permission |
+| :--- | :--- | :--- |
+| `id` | `PluginId` | — |
+| `version` | `string` | — |
+| `logger` | `Logger` | — |
+| `settings` | `SettingsStore<S>` | — |
+| `permissions` | `PermissionsApi` | — |
+| `events` | `EventBus` | `host:events`, event names checked against `events` |
+| `bridge` | `Bridge` | `host:actions` (`send`, `request`; action names checked against `actions`), `host:intercept` (`interceptOutbound`) |
+| `http` | `HttpApi` | `network`, hosts checked against `hosts` |
+| `ui` | `UiApi` | — |
+| `notifications` | `NotificationsApi` | `notifications` |
+| `osc` | `OscApi` | `osc` |
+| `native` | `NativeApi` | `native` |
+| `gameLog` | `GameLogApi` | `gamelog` |
+| `deepLinks` | `DeepLinkApi` | `host:events` with `openDeepLink` in `events` |
+| `router` | `RouterApi` | `routes` |
+| `contextMenu` | `ContextMenuApi` | `context-menu` |
+| `clipboard` | `ClipboardApi` | `clipboard` |
+| `disposables` | `DisposableBag` | — |
+| `signal` | `AbortSignal` | — |
 
-## Identifiers
+A gated member called without its category throws `PermissionError`; a concrete target the user
+has not confirmed prompts first. See [Permissions](permissions.md).
 
-`PluginId` · `PluginKey` · `RepoId` — branded strings.
-`isPluginId()` · `parsePluginId()` · `makePluginKey()` · `makeRepoId()`
+## Permissions
+
+```ts
+type Permission = 'host:events' | 'host:actions' | 'host:intercept' | 'network' | 'notifications'
+  | 'native' | 'osc' | 'gamelog' | 'context-menu' | 'routes' | 'clipboard';
+type PermissionTone = 'low' | 'medium' | 'high';
+interface PermissionInfo { readonly description: string; readonly tone: PermissionTone }
+
+const PERMISSIONS: Readonly<Record<Permission, PermissionInfo>>;
+const PERMISSION_NAMES: readonly Permission[];
+function isPermission(value: unknown): value is Permission;
+function permissionInfo(permission: Permission): PermissionInfo;
+
+class PermissionError extends Error {
+  readonly permission: Permission;
+  readonly target: string | undefined;   // host, action, event or service/method; undefined for a category
+}
+
+interface PermissionsApi {
+  has(permission: Permission): boolean;              // cheap; safe per event
+  request(permission: Permission): Promise<boolean>; // optionalPermissions only; rejects otherwise
+}
+```
+
+## Manifest and identifiers
+
+```ts
+const MANIFEST_FILENAME = 'plugin.json';
+const MANIFEST_LIMITS = { descriptionChars: 200, tags: 8 };
+const PLUGIN_TAGS: readonly string[];                 // suggested tags; any string is accepted
+const PLUGIN_ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,39}$/;
+
+type PluginId;                                        // branded string
+function isPluginId(value: string): value is PluginId;
+function parsePluginId(value: string): PluginId | undefined;
+
+interface PluginSummary {
+  readonly id: PluginId; readonly name: string; readonly version: string;
+  readonly description: string; readonly tags: readonly PluginTag[];
+  readonly permissions: readonly Permission[];
+  readonly optionalPermissions: readonly Permission[];
+  readonly actions: readonly string[]; readonly events: readonly string[];
+  readonly hosts: readonly string[];
+}
+interface PluginManifest extends PluginSummary {
+  readonly apiVersion: string; readonly author?: string; readonly homepage?: string;
+  readonly dependencies?: readonly PluginId[];        // not accepted by the bridge yet
+}
+function parsePluginManifest(raw: unknown): ManifestParseResult;   // { manifest | undefined, errors }
+```
+
+## Semver
+
+The slice this project needs: plain `MAJOR.MINOR.PATCH` versions, and ranges that are exact,
+`^`, `~` or a space-separated comparator list.
+
+```ts
+type Version = readonly [major: number, minor: number, patch: number];
+function parseVersion(text: string): Version | undefined;
+function isVersion(text: string): boolean;
+function compareVersions(a: Version, b: Version): -1 | 0 | 1;
+function parseRange(text: string): ((version: Version) => boolean) | undefined;
+function isRange(text: string): boolean;
+function satisfies(version: string, range: string): boolean;   // malformed input never satisfies
+```
 
 ## Settings
 
 `SettingsSchema` · `SettingsValues<S>` · `SettingsStore<S>` · `SettingSpec`
-`BooleanSetting` · `NumberSetting` · `StringSetting` · `SelectSetting<V>` · `SelectOption<V>`
-`defaultsFor()` · `coerceSetting()`
+`BooleanSetting` · `NumberSetting` · `StringSetting` · `ColorSetting` · `SelectSetting<V>` ·
+`SelectOption<V>` · `defaultsFor()` · `coerceSetting()`
 
 ```ts
 interface SettingsStore<S> {
@@ -70,21 +139,37 @@ interface SettingsStore<S> {
 interface EventBus {
   on<T extends string>(type: T, listener: EventListener<T>): () => void;
   once<T extends string>(type: T, listener: EventListener<T>): () => void;
-  onAny(listener: (envelope: HostEnvelope) => void): () => void;
+  onAny(listener: (envelope: HostEnvelope) => void): () => void;   // prompts: "listen to every VRCNext event"
   next<T extends string>(type: T, signal?: AbortSignal): Promise<EventPayload<T>>;
 }
 ```
 
 `VrcnextEventMap` — verified payloads: `setPlatform` · `log` · `toast` · `dbMigrationProgress` ·
 `openDeepLink` · `friendTimelineEvent` · `customThemes`. Anything else is `unknown`.
+`KnownEventType` · `EventPayload<T>` · `EventListener<T>` · `HostEnvelope` · `LogColor` · `LOG_COLORS`
 
-## Bridge
+## Bridge (VRCNext actions)
 
 ```ts
 interface Bridge {
   send(action: ActionName, args?: ActionArgs): void;
-  request<T extends string>(action, args, options: RequestOptions & { expect: T }): Promise<EventPayload<T>>;
+  request<T extends string>(action: ActionName, args: ActionArgs | undefined,
+    options: RequestOptions & { readonly expect: T }): Promise<EventPayload<T>>;
   interceptOutbound(fn: (action: ActionName, raw: string) => boolean | undefined): () => void;
+}
+interface RequestOptions { readonly expect: string; readonly timeoutMs?: number; readonly signal?: AbortSignal }
+```
+
+## HTTP and clipboard
+
+```ts
+interface HttpApi {
+  /** The only fetch a plugin has. Always carries the plugin's abort signal. */
+  fetch(url: string | URL, init?: RequestInit): Promise<Response>;
+}
+interface ClipboardApi {
+  writeText(text: string): Promise<void>;
+  readText(): Promise<string>;
 }
 ```
 
@@ -97,53 +182,15 @@ interface UiApi {
   addSettingsCard(options: SettingsCardOptions): PanelHandle;
   injectCss(css: string): PanelHandle;
   toast(options: ToastOptions): void;
+  readonly kit: UiKit;
+  createPanelLayout(): HTMLElement;
   createCard(title: string, icon: IconName): HTMLElement;
   createToggleRow(label: string, checked: boolean, onChange: (next: boolean) => void): HTMLElement;
 }
 ```
 
-## Notifications
-
-```ts
-interface NotificationsApi {
-  toast(options: ToastOptions): void;
-  notifToast(options: NotifToastOptions): void;
-  desktop(options: DesktopNotifyOptions): void;   // tray + SteamVR overlay; Windows only
-  readonly desktopAvailable: boolean;
-  confirm(options: ConfirmOptions): Promise<boolean>;
-}
-```
-
-`NOTIFY_ACCENTS` = `'accent' | 'info' | 'ok' | 'warn' | 'err'`
-`NOTIF_TOAST_KINDS` = `'invite' | 'friendRequest' | 'notification'`
-
-## Context menu
-
-```ts
-interface ContextMenuApi {
-  contribute(provider: ContextMenuProvider): () => void;
-  contributeFor(selector: string, provider: ContextMenuProvider): () => void;
-  open(x: number, y: number, entries: readonly ContextMenuEntry[]): void;
-}
-```
-
-`ContextMenuEntry` = `ContextMenuItem | ContextMenuSubmenu | ContextMenuDivider`
-
-## OSC
-
-```ts
-interface OscApi {
-  readonly available: boolean;   // false on Linux — VRCNext filters every osc* action
-  connect(): void;
-  disconnect(): void;
-  send(name: string, kind: 'bool', value: boolean): void;
-  send(name: string, kind: 'int' | 'float', value: number): void;
-  sendRaw(address: string, kind: 'bool', value: boolean): void;
-  sendRaw(address: string, kind: 'int' | 'float', value: number): void;
-  onParam(listener: (event: OscParamEvent) => void): () => void;
-  onAvatarChange(listener: (event: OscAvatarChangeEvent) => void): () => void;
-}
-```
+`NavTabOptions` · `DashboardCardOptions` · `SettingsCardOptions` · `PanelHandle` · `IconName` ·
+`ToastOptions`
 
 ## UI kit
 
@@ -179,18 +226,55 @@ interface UiKit {
 }
 ```
 
+## Notifications
+
+```ts
+interface NotificationsApi {
+  toast(options: ToastOptions): void;
+  notifToast(options: NotifToastOptions): void;
+  desktop(options: DesktopNotifyOptions): void;   // tray + SteamVR overlay; Windows only
+  readonly desktopAvailable: boolean;
+  confirm(options: ConfirmOptions): Promise<boolean>;
+}
+```
+
+`NOTIFY_ACCENTS` = `'accent' | 'info' | 'ok' | 'warn' | 'err'`
+`NOTIF_TOAST_KINDS` = `'invite' | 'friendRequest' | 'notification'`
+
+## Context menu
+
+```ts
+interface ContextMenuApi {
+  contribute(provider: ContextMenuProvider): () => void;
+  contributeFor(selector: string, provider: ContextMenuProvider): () => void;
+  open(x: number, y: number, entries: readonly ContextMenuEntry[]): void;
+}
+```
+
+`ContextMenuEntry` = `ContextMenuItem | ContextMenuSubmenu | ContextMenuDivider` · `ContextMenuTarget`
+
+## OSC
+
+```ts
+interface OscApi {
+  readonly available: boolean;   // false on Linux — VRCNext filters every osc* action
+  connect(): void;
+  disconnect(): void;
+  send(name: string, kind: 'bool', value: boolean): void;
+  send(name: string, kind: 'int' | 'float', value: number): void;
+  sendRaw(address: string, kind: 'bool', value: boolean): void;
+  sendRaw(address: string, kind: 'int' | 'float', value: number): void;
+  onParam(listener: (event: OscParamEvent) => void): () => void;
+  onAvatarChange(listener: (event: OscAvatarChangeEvent) => void): () => void;
+}
+```
+
+`OSC_VALUE_KINDS` · `OscValueKind` · `OscValue` · `OscParamEvent` · `OscAvatarChangeEvent`
+
 ## VRCNext Bridge
 
 ```ts
-type NativeStatus = 'not_detected' | 'running_not_connected' | 'connected';
-
 interface NativeApi {
-  readonly available: boolean;        // detected: health answered, or the socket is open
-  readonly status: NativeStatus;      // the finer answer, for a status indicator
-  readonly ready: Promise<boolean>;   // the boot probe — await this inside activate()
-  readonly endpoint: string;
-  probe(): Promise<boolean>;
-  describe(): Promise<NativeDescription | undefined>;
   targets(): Promise<readonly NativeTarget[]>;
   notify(options: NativeNotifyOptions): Promise<NativeNotifyResult>;
   call(service: string, method: string, params?: unknown): Promise<unknown>;
@@ -221,7 +305,7 @@ interface NativeNotifyFields {
   readonly audioPath?: string;
   readonly height?: number;      // VR overlays only
   readonly opacity?: number;     // VR overlays only
-  readonly urgency?: 'low' | 'normal' | 'critical';  // desktop daemons only
+  readonly urgency?: NativeUrgency;  // 'low' | 'normal' | 'critical'; desktop daemons only
   readonly alwaysShow?: boolean; // VR overlays only
 }
 
@@ -232,9 +316,9 @@ interface NativeNotifyResult {
 }
 ```
 
-Every method degrades cleanly when the bridge is absent — `notify()` resolves with `ok: false`
-rather than rejecting. Only `call()` rejects, with an error carrying the bridge's own `code`. See
-[VRCNext Bridge](native-companion.md).
+The bridge is connected whenever a plugin runs, so there is no `available`, `status` or `probe`.
+`notify()` resolves with `ok: false` rather than rejecting when no target accepted; `call()`
+rejects with an error carrying the bridge's own `code`. See [VRCNext Bridge](native-companion.md).
 
 ## Game log
 
@@ -263,11 +347,11 @@ interface DeepLinkApi {
 }
 ```
 
-## Manifest and disposal
+`DEEP_LINK_PREFIXES` = `'usr' | 'avtr' | 'wrld' | 'grp' | 'inst' | 'instjoin'` · `RouteRequest` · `RouteHandler`
 
-`parseRepoManifest()` · `RepoManifest` · `PluginManifest` · `ManifestParseResult`
-`MANIFEST_FILENAME` · `MANIFEST_FORMAT_VERSION`
+## Disposal and logging
+
 `DisposableBag` · `Disposable` · `DisposeFn`
-`Logger` · `LogLevel` · `LOG_LEVELS` · `LogColor` · `LOG_COLORS`
+`Logger` · `LogLevel` · `LOG_LEVELS`
 
 [← Limitations](limitations.md) · [Back to index](./)

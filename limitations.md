@@ -6,8 +6,8 @@ title: Limitations
 
 [← Back to index](./)
 
-An honest list of what this host **cannot** do, and why. Each entry was verified against the
-VRCNext source at 2026.60.5 rather than assumed.
+An honest list of what this system **cannot** do, and why. Each VRCNext entry was verified
+against the VRCNext source at 2026.60.5 rather than assumed.
 
 ## Impossible without patching VRCNext
 
@@ -15,10 +15,21 @@ VRCNext source at 2026.60.5 rather than assumed.
 | :--- | :--- |
 | **Externally reachable HTTP routes** | VRCNext's server is a C# `HttpListener` with a fixed route table. The page cannot add to it; the router wraps `fetch`, which external requests never touch. |
 | **Custom `vrcn://` prefixes** | `DeepLinkService.Parse` validates against a closed list and returns `null` otherwise, so unknown prefixes are dropped in C# before the page sees them. |
-| **Writing to disk** | The page has no filesystem access. Plugin code, settings and the registry live in IndexedDB. |
-| **Self-updating the host** | The host is a file in VRCNext's theme folder. It can detect a new release, not install one. |
+| **Writing to disk from a plugin** | The page has no filesystem access. Everything persistent — settings, enabled flags, saved grants — goes through the [bridge](native-companion.md)'s state store, which is the only thing that can write a file. |
 | **Interleaving context-menu items** | `getMenuConfig` is module-closure-scoped; contributions are appended after VRCNext's own items. |
 | **New OSC ports** | VRCNext owns the sockets. Plugins send and receive through it, sharing one OSCQuery advertisement. |
+
+## By design in the plugin system
+
+| Want | Why not |
+| :--- | :--- |
+| **Loading a plugin without the bridge** | The page runs one static bundle that only the bridge produces. It never evaluates code at runtime, so there is no path for a URL, a blob or a pasted script to become a running plugin. |
+| **Hot reload** | Every change is a commit, push, **Update** (confirmed on the desktop), rebuild, **Reload**. Slower than a dev server, and the price of never running code the bridge has not checked. |
+| **npm dependencies** | The bridge has no package manager. Anything a plugin imports must be committed into the repository, where it is scanned by the [source policy](source-policy.md) and counts against the 200-file / 2 MiB limits. |
+| **Reaching `window`, `fetch`, `localStorage`, …** | Refused at install by the source policy, so that everything a plugin does outside its own panels goes through `ctx.*` and the [permission gate](permissions.md) can see it. |
+| **A sandbox** | A plugin is compiled into the same bundle as the host and runs with the page's authority. Permissions and the policy make what it does declared and confirmed; they do not contain a plugin that is determined to misbehave. See [Security model](security.md). |
+| **Silent installs** | Install, update and uninstall are confirmed natively — a notification on Linux, a message box on Windows — because the page cannot be trusted to confirm code being added to itself. Without a prompt channel the bridge refuses. |
+| **`dependencies` in `plugin.json`** | The host parser accepts it; the bridge's manifest schema does not yet, and it refuses unknown fields. |
 
 ## Windows-only in VRCNext
 
@@ -47,15 +58,14 @@ and overlay work inside it is `#if WINDOWS`, so nothing happens. That is why
 ### The notification gate has a way around it
 
 These gates are in VRCNext, and the page cannot escape them. A **separate process** is not subject
-to them at all — which is what the optional
-[VRCNext Bridge](native-companion.md) is. `ctx.native` reaches VR overlays and the desktop
-notification daemon on Linux and Windows alike, because the daemon talks to them directly rather
-than asking VRCNext to.
+to them at all — which is what the [VRCNext Bridge](native-companion.md) is. `ctx.native` reaches
+VR overlays and the desktop notification daemon on Linux and Windows alike, because the daemon
+talks to them directly rather than asking VRCNext to.
 
 It is a workaround for notifications only. OSC stays gated: `ctx.osc` goes through VRCNext's own
 sockets, and no bridge service exposes OSC today.
 
-Everything else — events, the bridge's non-prefixed actions, the game log, UI, context menus,
+Everything else — events, actions without those prefixes, the game log, UI, context menus,
 routes, settings, logging — works on both platforms.
 
 ## Fragile by nature
@@ -74,20 +84,28 @@ These work, but depend on VRCNext internals with no stability guarantee:
 
 ## Environmental gotchas
 
-- **Port pinning is mandatory in practice.** IndexedDB is scoped to
+- **Pin the port.** The pairing token lives in the page's `localStorage`, scoped to
   `http://localhost:<LocalHttpPort>`; VRCNext picks a new random port when its saved one is
-  taken, and a new origin orphans every installed plugin. Install with `--pin-port`.
+  taken, and a new origin means pasting the token again. Install with `--pin-port`. (Plugins and
+  settings are unaffected: they live in the bridge's state store, not in the page.)
+- **Start the bridge inside the graphical session.** Desktop notifications and the install
+  confirmation both need a session bus; a bridge started without one refuses every install with
+  `approval_unavailable`. The installer's systemd unit orders after `graphical-session.target`
+  for this reason.
 - **NVIDIA on Linux:** VRCNext re-executes itself to set `WEBKIT_DISABLE_DMABUF_RENDERER=1`, so
   you will see two processes. Export it yourself to skip the double launch.
 - **`install_vrcnext.sh` does not register `vrcn://`** — its `.desktop` lacks `MimeType=` and
   `%u`. The AppImage build does.
-- **Windows is untested.** The design is cross-platform (WebView2 exposes the same
-  `receiveMessage` contract), but this host has only been developed against Linux.
+- **Windows and macOS are untested.** The installer, the message-box prompt and the Scheduled
+  Task were written carefully and have not been run; this system has only been developed against
+  Linux.
 
 ## Verification status
 
-The build, the type gate and the unit tests are green. The DOM injection, IndexedDB persistence
-and the installer have **not** been exercised inside a running VRCNext. Treat UI behaviour as
+The build, the type gate and the unit tests are green: the permission broker, the state client,
+the settings store, the compiled-table reader, the bridge socket and every source-policy rule are
+tested without a DOM. The modals, the manager panel, the boot sequence and the installer have
+**not** been exercised inside a running VRCNext against a real bridge. Treat UI behaviour as
 unverified until you have run it.
 
 [← Security model](security.md) · [API reference →](api-reference.md)

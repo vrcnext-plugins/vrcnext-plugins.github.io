@@ -7,7 +7,9 @@ title: Routes & deep links
 [← Back to index](./)
 
 This page documents two features with **real, hard limits**. Read the caveats before designing
-around either.
+around either. Routes need the `routes` permission (nothing inside prompts further); deep links
+arrive through `host:events` and need `openDeepLink` in `plugin.json`'s `events` — or the user
+confirms it on first use.
 
 ## In-page HTTP routes
 
@@ -30,7 +32,7 @@ Routes mount under `/plugins/<your-plugin-id>/`, exposed as `ctx.router.base`.
 > `/imgcache/`, `/vrcphotos/`, `/media<n>/`, `/cursor/`, `/builtinthemes/`, `/customthemes/`,
 > `/dashbg`, `/ytembed`. The page cannot add to it.
 >
-> The router works by wrapping `globalThis.fetch`, so:
+> The router works by wrapping the page's `fetch`, so:
 >
 > - ✅ Your plugin, another plugin, or the devtools console can call your routes.
 > - ❌ `curl http://localhost:51888/plugins/my-plugin/stats` **will not work.** An external
@@ -84,4 +86,4 @@ VRCNext's own handling, which already ran before the page saw the event.
 On Linux, `vrcn://` only works if the desktop entry registers the scheme. The AppImage does;
 `install_vrcnext.sh` does **not** — its `.desktop` lacks `MimeType=` and `%u`.
 
-[← Game log](game-log.md) · [Publishing →](publishing.md)
+[← Game log](game-log.md) · [Logging →](logging.md)

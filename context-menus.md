@@ -6,6 +6,11 @@ title: Context menus
 
 [← Back to index](./)
 
+Needs the `context-menu` permission (low risk: it only adds entries to menus). The example
+also writes the clipboard, which is `ctx.clipboard` behind the `clipboard` permission — the
+user is asked the first time — because `navigator.clipboard` is not reachable through the
+[source policy](source-policy.md).
+
 ```ts
 ctx.contextMenu.contribute((target) => [
   { kind: 'divider' },
@@ -13,7 +18,7 @@ ctx.contextMenu.contribute((target) => [
     kind: 'item',
     icon: 'content_copy',
     label: 'Copy element tag',
-    onSelect: () => navigator.clipboard.writeText(target.element.tagName),
+    onSelect: () => ctx.clipboard.writeText(target.element.tagName),
   },
   {
     kind: 'submenu',
@@ -50,7 +55,7 @@ ctx.contextMenu.contributeFor('.friend-row', (target) => [ /* … */ ]);
 ```ts
 if (target.entity?.type === 'user') {
   entries.push({ kind: 'item', icon: 'badge', label: 'Copy user id',
-                 onSelect: () => navigator.clipboard.writeText(target.entity.id) });
+                 onSelect: () => ctx.clipboard.writeText(target.entity.id) });
 }
 ```
 
@@ -77,4 +82,4 @@ Consequences worth knowing:
 - Providers run on **every menu open** — keep them cheap.
 - A provider that throws is logged and skipped; the menu still opens.
 
-[← Using TSX](tsx.md) · [OSC →](osc.md)
+[← VRCNext Bridge](native-companion.md) · [OSC →](osc.md)

@@ -24,6 +24,9 @@ title: OSC
 >
 > Calls made when `available` is `false` log a warning rather than failing silently.
 
+`ctx.osc` needs the `osc` permission, and the user confirms it once per plugin on first use —
+*Plugin {name} ({id}) wants to send and receive OSC through VRCNext*.
+
 VRCNext owns the OSC sockets: it sends to `127.0.0.1:9000`, listens on `9001` with
 `SO_REUSEADDR`, and advertises an extra receive port over OSCQuery. Plugins do **not** open
 sockets — they ask VRCNext to send and subscribe to what it receives. That keeps one OSCQuery

@@ -6,8 +6,9 @@ title: Notifications
 
 [← Back to index](./)
 
-VRCNext has four distinct notification surfaces. They are **not** interchangeable, and one of
-them is Windows-only.
+`ctx.notifications` needs the `notifications` permission; nothing inside it prompts further,
+since every surface below only shows the user something. VRCNext has four distinct
+notification surfaces. They are **not** interchangeable, and one of them is Windows-only.
 
 | Surface | Reaches | Availability |
 | :--- | :--- | :--- |
@@ -92,8 +93,6 @@ Every method looks its global up at call time. If a VRCNext update renames or re
 call falls back to the plugin log rather than throwing inside your event handler. You will see
 a line in the Logs panel instead of a broken plugin.
 
-[← UI injection](ui.md) · [Logging →](logging.md)
-
 ## Beyond VRCNext's own surfaces
 
 Everything above goes through VRCNext, which means it inherits VRCNext's platform gates — the tray
@@ -102,7 +101,8 @@ on Linux.
 
 The [VRCNext Bridge](native-companion.md) is the way around that. It is a separate local process,
 so it is not subject to VRCNext's gating, and it can address a VR overlay and the desktop
-notification daemon as separate targets:
+notification daemon as separate targets. It needs the `native` permission, and the first
+`notify/send` is confirmed by the user:
 
 ```ts
 await ctx.native.notify({
@@ -113,4 +113,8 @@ await ctx.native.notify({
 });
 ```
 
-It is optional and must be installed separately, so guard on `ctx.native.available`.
+The bridge is always present when a plugin runs — the host does not activate plugins without
+it — so there is nothing to guard on. `notify()` resolves with `ok: false` and a `failed` list
+when no target accepted, which is a normal state (no overlay running), not an exception.
+
+[← UI injection](ui.md) · [VRCNext Bridge →](native-companion.md)

@@ -10,6 +10,10 @@ VRCNext tails VRChat's `output_log_*.txt` and republishes parsed entries. This i
 **lowest-latency source of in-game activity** — most of VRCNext's own timeline comes from here
 rather than from the VRChat API.
 
+`ctx.gameLog` needs the `gamelog` permission (medium: the log names who the user plays with),
+confirmed once per plugin on first use — *Plugin {name} ({id}) wants to read the VRChat game
+log*.
+
 ```ts
 ctx.gameLog.on((entry) => {
   ctx.logger.info(`${entry.type}: ${entry.message}`);

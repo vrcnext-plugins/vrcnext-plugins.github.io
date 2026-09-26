@@ -6,40 +6,74 @@ title: Getting started
 
 [← Back to index](./)
 
-## 1. Install the host
+## 1. Install the plugin system
+
+One command installs everything: the VRCNext Bridge daemon, a pinned `esbuild`, the plugin host
+sources, autostart, the first bundle build, and the pairing token.
+
+**Linux / macOS**
 
 ```bash
-git clone https://github.com/vrcnext-plugins/vrcnext-plugin-system
-cd vrcnext-plugin-system
-npm install
-npm run build
+curl -fsSL https://raw.githubusercontent.com/vrcnext-plugins/vrcnext-plugin-system/main/install/install.sh | bash
 ```
 
-Close VRCNext, then install. The script refuses to run while VRCNext is open, because VRCNext
-rewrites `settings.json` on exit and would undo the change.
+**Windows** (PowerShell 5.1 or newer)
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/vrcnext-plugins/vrcnext-plugin-system/main/install/install.ps1 | iex
+```
+
+> Piping a script into a shell runs code from the internet with your user's rights. If you would
+> rather not do that blind, download the script first, read it, then run it. Both scripts verify
+> the sha256 of everything they download; nothing verifies the script itself.
+
+Requirements: `curl` and `tar` on Linux/macOS; Windows 10 1803+ for the built-in `tar.exe`. No
+Node, no git, no Rust. Re-running the installer is an upgrade: binaries and host sources are
+replaced, your plugins, state and token are kept, and the bundle is rebuilt. Flags (`--pin-port`,
+`--version`, `--dry-run`), the on-disk layout and uninstall steps are in the
+[installer README](https://github.com/vrcnext-plugins/vrcnext-plugin-system/blob/main/install/README.md).
+
+The installer ends by printing a **pairing token** in a box, and three steps.
+
+## 2. Pair VRCNext with the bridge
+
+1. In VRCNext, enable the theme under **Settings → Design → Themes** (the installer does this for
+   you if VRCNext was closed while it ran).
+2. Open the **Plugins** tab. Until the bridge is connected it shows only the Bridge card, in one
+   of four states: *Not detected*, *Running, connecting…*, *Running, not paired*, *Connected*.
+3. Paste the token into the card and press **Pair**.
+
+The token is the page's proof that it is allowed to talk to the daemon; an arbitrary web page
+open in a browser on the same machine does not have it. It is stored in the page's
+`localStorage`, which is why the installer offers `--pin-port`: VRCNext picks a new random port
+when its saved one is taken, and a new port is a new origin, so you would have to paste it
+again. To see the token later: `vrcnext-bridge --print-token`.
+
+## 3. Start a plugin from the template
+
+Copy [`examples/template`](https://github.com/vrcnext-plugins/vrcnext-plugin-system/tree/main/examples/template)
+into a new git repository. It is the recommended starting point: a strict `tsconfig.json`, an
+ESLint config mirroring the host's rules, a `plugin.json` skeleton and a `main.ts` skeleton.
+
+```
+plugin.json        the manifest
+main.ts            default-exports definePlugin({...})
+src/**             optional, imported from main.ts
+README.md          optional
+```
+
+Rename the `id` in both `plugin.json` and `main.ts` — they must agree. Then:
 
 ```bash
-./scripts/install-into-vrcnext.sh --dry-run
-./scripts/install-into-vrcnext.sh --pin-port=51888
+npm install --save-dev typescript eslint @eslint/js typescript-eslint
+npm install @vrcnext/plugin-api      # or a file: link to a checkout of packages/api
+npm run check
 ```
 
-> **Pin the port.** Installed plugins live in IndexedDB, scoped to the page origin
-> `http://localhost:<LocalHttpPort>`. VRCNext picks a *new random port* whenever its saved one is
-> unavailable, and a new port is a new origin — which would silently orphan every installed
-> plugin. `--pin-port` writes `LocalHttpPort` into `settings.json` so the origin stays put. Pick
-> a free port in 49152–65533.
+`check` typechecks and lints. The ESLint config flags most of the [source policy](source-policy.md)
+before the bridge does, so a plugin that passes `check` is unlikely to be refused at install.
 
-Start VRCNext. A **Plugins** entry appears in the sidebar.
-
-## 2. Scaffold a plugin
-
-```bash
-mkdir my-plugin && cd my-plugin
-npm init -y
-npm i -D @vrcnext/plugin-api esbuild typescript
-```
-
-`src/index.ts`:
+`main.ts`:
 
 ```ts
 import { definePlugin, type PluginId } from '@vrcnext/plugin-api';
@@ -53,46 +87,35 @@ export default definePlugin({
 });
 ```
 
-## 3. Build one ESM bundle
+Nothing is bundled on your side. The bridge compiles the repository together with the host, so
+`main.ts` is imported as TypeScript straight from the clone. There is no `dist/` to commit.
 
-```bash
-npx esbuild src/index.ts --bundle --format=esm --target=es2023 --outfile=dist/my-plugin.js
-```
+## 4. Install it
 
-The host evaluates this file as a real ES module, so it must default-export the plugin. Do not
-bundle as IIFE — that is the *host's* format, not a plugin's.
+Push to the default branch, then in VRCNext open **Plugins**, paste the repository's `https://`
+URL into **Install a plugin** and press **Install**. What happens next:
 
-## 4. Publish a manifest
+1. The bridge asks you to **confirm on your desktop** — a notification with Confirm/Deny on
+   Linux, a message box on Windows. The page cannot answer this for you; that is the point.
+2. It clones the repository, validates `plugin.json`, scans the sources against the policy, and
+   rebuilds the bundle. Each step shows in the panel as it happens.
+3. A toast says **Rebuilt — reload to apply**. Press **Reload**. The page never reloads on its
+   own.
+4. Enable the plugin. A modal lists every permission it declares, with a description and a risk
+   badge, plus the exact hosts, actions and events it pre-declares. **Enable** grants those;
+   **Cancel** leaves it disabled.
 
-`vrcnext-plugins.json` at your repo root:
-
-```json
-{
-  "formatVersion": 1,
-  "name": "My VRCNext Plugins",
-  "plugins": [
-    {
-      "id": "my-plugin",
-      "name": "My Plugin",
-      "version": "1.0.0",
-      "description": "Does a useful thing.",
-      "entry": "dist/my-plugin.js",
-      "apiVersion": "^0.1.0"
-    }
-  ]
-}
-```
-
-Commit `dist/` — users fetch the built file directly, they do not build your plugin.
-
-## 5. Install it
-
-Push, then in VRCNext open **Plugins**, paste `owner/repo`, press Add, then Install and enable.
+Anything the plugin then touches for the first time inside a declared category — a new host, an
+action name, an event — is confirmed by one more prompt. See [Permissions](permissions.md).
 
 ## Development loop
 
-Editing a plugin means rebuilding and reinstalling, which is slow. While iterating, paste your
-bundle straight into the devtools console instead:
+The bridge only knows how to clone over HTTPS, so iterating means: commit, push, **Update** in
+the Plugins tab (confirmed on the desktop again), **Reload**. That is slower than a hot reload,
+and it is the price of never evaluating code the bridge has not checked.
+
+To see what a plugin is doing, use **Plugins → Logs** rather than devtools: it shows plugin, host
+and bridge output with level and scope filters. Devtools do work if you need them:
 
 ```bash
 WEBKIT_INSPECTOR_SERVER=127.0.0.1:2999 /opt/vrcnext/VRCNext

@@ -42,7 +42,8 @@ await ctx.settings.reset();
 ```
 
 `values` is synchronous because everything is loaded once at activation — reading a setting
-inside a hot event handler should not await IndexedDB.
+inside a hot event handler should not await the bridge. Writes are debounced 200 ms and
+coalesced, and anything still pending is flushed when the plugin is disabled.
 
 ## Reacting to changes
 
@@ -74,10 +75,14 @@ no crash on upgrade.
 
 ## Where it is stored
 
-IndexedDB, keyed by `<repo>#<plugin-id>`. Settings survive updates (the bundle is keyed
-separately) and are deleted on uninstall.
+In the [VRCNext Bridge](native-companion.md)'s state store — `~/.vrcnext-plugins/state.json`,
+namespace `plugin:<id>`, one key per setting. The page has no storage of its own worth trusting:
+it cannot write a file, and anything origin-scoped in the browser is lost the moment VRCNext
+picks a new port. Settings survive plugin updates (the clone is replaced, the state is not) and
+are deleted on uninstall. Each value is at most 64 KiB serialised.
 
-> **Never put secrets here.** IndexedDB is readable by anything running in the page, including
-> other plugins. There is no secret storage in this host.
+> **Never put secrets here.** The state store is a plain JSON file on the user's disk, and every
+> plugin in the page can reach the host's state client. There is no secret storage in this
+> system.
 
-[← Plugin anatomy](plugin-anatomy.md) · [Events & the bridge →](events-and-bridge.md)
+[← Source policy](source-policy.md) · [Events & actions →](events-and-bridge.md)

@@ -11,9 +11,12 @@ font-size offset and any active custom theme. Hand-rolling a `<button>` loses al
 
 ## Where plugin UI appears
 
+`ctx.ui` needs no permission: it can only draw the plugin's own panels.
+
 Installing the host adds a **Plugins** group to the sidebar (a divider plus a puzzle-piece
 entry) and mirrors it as a **Plugins** menu in the top bar. Both drive the same three tabs:
-**Manage Plugins**, **Logs**, and **Plugin System**.
+**Manage Plugins** (the Bridge card, install by URL, enable, update, uninstall, saved
+permissions), **Logs**, and **Plugin System** (status, platform matrix, diagnostics).
 
 Your plugin's own `addNavTab` entries are separate top-level sidebar buttons — they are not
 placed inside that group.
@@ -201,4 +204,4 @@ Pick icons you have actually seen in the app. To list what is definitely present
 grep -rho 'msi">[a-z_0-9]*' frontend/ | sed 's/.*>//' | sort -u
 ```
 
-[← Events & the bridge](events-and-bridge.md) · [Notifications →](notifications.md)
+[← Events & actions](events-and-bridge.md) · [Notifications →](notifications.md)

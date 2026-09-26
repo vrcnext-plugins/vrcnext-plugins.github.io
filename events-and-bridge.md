@@ -1,13 +1,27 @@
 ---
-title: Events & the bridge
+title: Events & actions
 ---
 
-# Events & the bridge
+# Events & actions
 
 [← Back to index](./)
 
 VRCNext's frontend talks to its C# backend over a Photino channel: roughly **474 outbound
-actions** and **310 inbound events**. Plugins get both.
+actions** and **310 inbound events**. Plugins get both, behind three permissions:
+
+| Permission | Tone | Unlocks | Confirmed on first use |
+| :--- | :--- | :--- | :--- |
+| `host:events` | low | `ctx.events`, `ctx.deepLinks` | each event name not in `plugin.json`'s `events`; `onAny` once |
+| `host:actions` | high | `ctx.bridge.send`, `ctx.bridge.request` | each action name not in `actions`, with the payload shown |
+| `host:intercept` | high | `ctx.bridge.interceptOutbound` | once per plugin |
+
+Names you list in `plugin.json` are granted when the user enables the plugin; anything else is a
+prompt the first time. Declare what you know you need — one modal at enable beats five in the
+first minute. See [Permissions](permissions.md).
+
+(`ctx.bridge` is the VRCNext bridge — the Photino channel — not the
+[VRCNext Bridge](native-companion.md) daemon, which is `ctx.native`. The name predates the
+daemon.)
 
 ## Receiving events
 
@@ -29,6 +43,9 @@ const payload = await ctx.events.next('vrcMyProfile', ctx.signal);
 ```
 
 Subscriptions are registered on your disposable bag, so forgetting to unsubscribe is not a leak.
+A subscription to an event that still needs the user's answer returns at once and starts
+delivering once they confirm — `activate` never blocks on a prompt — and unsubscribing before
+the answer simply cancels it.
 
 ## Typed vs unknown payloads
 
@@ -64,8 +81,10 @@ ctx.bridge.send('vrcLaunchAndJoin', { location: '', vr: false });
 ctx.bridge.send('vrcUpdateStatus', { status: 'join me', statusDescription: 'Come say hi' });
 ```
 
-> Actions operate on the user's **real VRChat account**. `send` is fire-and-forget with no
-> confirmation step — treat every call as outward-facing.
+> Actions operate on the user's **real VRChat account**. An action name not pre-declared in
+> `plugin.json` is confirmed by the user the first time, with your payload shown verbatim —
+> *Plugin {name} ({id}) wants to call VRCNext action vrcUpdateStatus*. After that, `send` is
+> fire-and-forget. Treat every call as outward-facing.
 
 ### Request/response
 
@@ -92,6 +111,7 @@ ctx.bridge.interceptOutbound((action, raw) => {
 ```
 
 Returning `false` drops the message before it reaches the backend — including VRCNext's own
-traffic. Powerful and easy to misuse; log before you block.
+traffic. Powerful and easy to misuse, which is why it is its own *High risk* category and is
+confirmed once per plugin. Log before you block.
 
 [← Settings](settings.md) · [UI injection →](ui.md)

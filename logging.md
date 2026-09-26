@@ -19,17 +19,21 @@ Every line goes to **three** places:
 
 1. The **browser console**, at the matching level (`console.debug` / `info` / `warn` / `error`).
 2. An in-memory **ring buffer** (2000 records), shared with the host's own output.
-3. **IndexedDB**, debounced — so logs survive a VRCNext restart.
+3. The **VRCNext Bridge**, which appends every record to its `plugins.log` on disk — so logs
+   survive a VRCNext restart without the page storing anything.
+
+`ctx.logger` needs no permission: it can only produce text the user reads.
 
 ## The Logs panel
 
-The **Plugins** tab carries a live log viewer below the repository manager:
+**Plugins → Logs** is a live viewer for plugin, host and bridge output:
 
 - Live tail, auto-scrolling unless you have scrolled up to read history.
-- Filter by **level** and by **plugin**.
+- Filter by **level** and by **scope** — a plugin id, `host`, or `bridge` for the daemon's own
+  lines, which come back over the socket.
 - **Copy** the filtered log to the clipboard.
 - **Download** it as a timestamped `.log` file.
-- **Clear**, which also clears the persisted copy.
+- **Clear** the in-page buffer.
 
 This exists so you can follow what plugins are doing without opening devtools.
 
@@ -64,6 +68,6 @@ history. `Error` values render as `Name: message`; circular structures fall back
 - Use `debug` for anything per-event. `onParam` can fire dozens of times a second; logging each
   one at `info` makes the panel useless.
 - Prefer `ctx.logger` over `console.log` — console output alone does not reach the panel, the
-  persisted log, or the downloadable file.
+  bridge's `plugins.log`, or the downloadable file.
 
-[← Notifications](notifications.md) · [Using TSX →](tsx.md)
+[← Routes & deep links](routes-and-links.md) · [Using TSX →](tsx.md)

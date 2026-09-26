@@ -4,88 +4,147 @@ title: VRCNext Bridge
 
 # VRCNext Bridge
 
-`ctx.native` reaches [vrcnext-bridge](https://github.com/vrcnext-plugins/vrcnext-bridge), an
-optional native companion daemon. It exists because VRCNext's page can only speak HTTP and
-WebSockets: it cannot open a UDP socket, connect to D-Bus, or reach a unix socket. Anything
-needing one of those has to happen in a native process.
+[← Back to index](./)
 
-The host keeps **one WebSocket** to the bridge open for the life of the page. Every call goes over
-it with a correlation id, so several can be in flight at once; the host's log records are mirrored
-over it to the bridge's log file; and the bridge's own log lines come back and appear in the Logs
-panel under the `bridge` scope. A plain HTTP probe of `/v1/health` is what tells "running" from
-"not installed".
+[vrcnext-bridge](https://github.com/vrcnext-plugins/vrcnext-bridge) is the native companion of
+the plugin system, and it is **mandatory**. VRCNext's page can only speak HTTP and WebSockets:
+it cannot clone a repository, run a compiler, keep a file, open a UDP socket or connect to D-Bus.
+Everything that needs one of those happens in the bridge, a small Rust daemon on loopback.
 
-Today that means **VR overlay and desktop notification targets**. On Linux this is the only route
-to either, since VRCNext's own notification features are Windows-gated — see the
-[platform matrix](limitations.md).
+```
+page  ──WebSocket──▶  vrcnext-bridge  ──pure-Rust git (HTTPS)──▶  plugin repositories
+                            │
+                            ├── spawns bin/esbuild ─────────────▶  <VRCNext config>/custom-themes/
+                            │      (checksum-verified, fixed args)     vrcnext-plugin-system/vrcnext-plugin-host.js
+                            ├── state.json     enabled flags, saved grants, plugin settings
+                            ├──UDP────────────────────────────────▶  WayVR / XSOverlay-protocol overlay
+                            └──D-Bus───────────────────────────────▶  the desktop's notification daemon
+```
 
-## It is optional, and your plugin must act like it
+Without it there is no install, no state and no build. The [installer](getting-started.md) sets
+it up, registers it to start with your session, and prints the pairing token.
 
-Most users will not have it installed. Every method degrades cleanly:
+## What it does
 
-| Method | Without the bridge |
+| Service | Does |
 | :--- | :--- |
-| `available` | `false` |
-| `status` | `'not_detected'` |
-| `ready` | resolves `false` |
-| `probe()` | resolves `false` |
-| `describe()` | resolves `undefined` |
-| `targets()` | resolves `[]` |
-| `notify()` | resolves `{ ok: false, delivered: [], failed: [] }` |
-| `call()` | **rejects** |
+| `plugins` | install / list / check_updates / update / uninstall / build — clones, validates [plugin.json](plugin-json.md) and the [source policy](source-policy.md), compiles the bundle |
+| `state` | the page's key-value store, `state.json`: enabled flags, saved permission grants, plugin settings |
+| `notify` | notifications to VR overlays and the desktop, individually targetable |
+| `logs` | appends the page's log lines to `plugins.log` |
 
-`notify()` and `targets()` never reject. Only `call()` does: with a `NativeRequestError` carrying
-the bridge's own `code` when the daemon answered and said no — a `bad_request` there means it is
-running fine and your request was wrong, which is why a refused request does **not** change
-`status` — or with a transport error when the socket did not open within the call's timeout.
+### The build
 
-A missing bridge is a normal state, not an exception — and a rejected promise inside an event
-handler is an unhandled rejection waiting to happen, which is why `notify()` resolves instead.
-
-### Await `ready`, do not read `available`, inside `activate`
-
-This is the one easy mistake. The host probes the bridge at boot, and that probe is usually
-**still in flight** when your plugin activates. `available` is a synchronous snapshot of it, so
-branching on it there is a race — true if the daemon answers quickly, false if it does not, and
-your VR notifications vanish with no error.
+The page runs **one static bundle**: the theme file VRCNext loads, containing the host and every
+installed plugin. After every install, update or uninstall the bridge verifies `esbuild`'s SHA-256
+against the checksum the installer wrote beside it, writes a generated import table —
 
 ```ts
-// Correct: one shared probe, awaited.
-if (!(await ctx.native.ready)) {
-  ctx.logger.info('No bridge; skipping VR notifications.');
-  return;
+import p0 from '../plugins/friend-alerts/main.ts';
+import m0 from '../plugins/friend-alerts/plugin.json';
+export const COMPILED_PLUGINS = [{ manifest: m0, plugin: p0 }] as const;
+```
+
+— and runs esbuild with a fixed argument list, a cleared environment and a 60 s deadline. A
+failed build leaves the previous bundle untouched. Then it pushes a `build` event and the page
+shows **Rebuilt — reload to apply** with a Reload button. It never reloads on its own, because
+a reload discards whatever you were doing in VRCNext.
+
+This is why the page never evaluates code at runtime and never fetches a manifest: everything it
+runs was checked by the bridge before it was compiled in. The build module is the one place the
+bridge spawns a process, and nothing from a plugin, a manifest or a request reaches the command
+line — the plugin id list is regex-validated and lands in a generated file.
+
+### Where things live
+
+```
+~/.vrcnext-plugins/                   Windows: %LOCALAPPDATA%\vrcnext-plugins\
+  bin/vrcnext-bridge[.exe]
+  bin/esbuild[.exe]  bin/esbuild.sha256
+  host/packages/{api,host}/src/       host sources, read-only input for the build
+  plugins/<id>/                       one git clone per installed plugin
+  build/static-plugins.ts             generated import table
+  state.json  token  bridge.log
+```
+
+The bundle goes to `~/.config/VRCNext/custom-themes/vrcnext-plugin-system/` (`%APPDATA%\VRCNext`
+on Windows), beside its source map and an `info.json`.
+
+## Pairing
+
+The page holds one WebSocket to `/v1/ws` for the life of VRCNext. The first frame must be a
+`hello` carrying the **pairing token**; until the bridge answers `welcome` the socket carries
+nothing, and a wrong token, any other first frame, or five seconds of silence closes it. A
+failed hello costs a rate-limit token, so guessing is slow.
+
+The token is 32 random bytes, generated on the bridge's first start and stored readable only by
+you at `~/.vrcnext-plugins/token`. It is the page's proof that it is allowed to talk to the daemon
+— any web page open in a browser on the same machine is not. The installer prints it once;
+`vrcnext-bridge --print-token` prints it again, `--rotate-token` replaces it (every paired page
+must re-pair).
+
+The page keeps the token and the endpoint in `localStorage`, scoped to VRCNext's origin
+`http://localhost:<LocalHttpPort>`. VRCNext picks a new random port when its saved one is taken,
+and a new port is a new origin, so you would have to paste the token again. The installer's
+`--pin-port` fixes the port for that reason.
+
+### The Bridge card
+
+Until the bridge is connected, the **Plugins** tab shows only the Bridge card. Its four states:
+
+| State | Meaning |
+| :--- | :--- |
+| **Not detected** | nothing answered `GET /v1/health` at the endpoint. Not installed, or not started. |
+| **Running, connecting…** | health answered; the socket is not open yet. |
+| **Running, not paired** | the bridge refused the `hello`. Paste the token and press **Pair**. |
+| **Connected** | the socket is open. The rest of the tab appears. |
+
+The card has a **Re-check** button for after you have just started the daemon, and an
+**Endpoint** field for a bridge started with a different `--listen` (loopback only; there is no
+override). The page cannot tell an uninstalled daemon from an installed one that is stopped, so
+there is deliberately no state claiming to.
+
+## Installs are confirmed on the desktop
+
+Installing, updating or uninstalling a plugin puts code into the page, and the page cannot be
+the thing that confirms that: any script already running there — a plugin included — could click
+its own dialog. So the bridge asks through something the page cannot reach:
+
+- **Linux:** a desktop notification titled *Install a plugin?* (or *Update plugin …?*,
+  *Uninstall plugin …?*) with the URL and two buttons, **Confirm** and **Deny**. It has critical
+  urgency so it does not expire on its own; closing it is a Deny.
+- **Windows:** a topmost Yes/No message box titled *VRCNext Bridge*.
+
+No answer within two minutes is a refusal. If the bridge has no way to ask — typically no
+session bus because it started outside the graphical session — every install answers
+`approval_unavailable` until it is restarted where a prompt can appear. There is no flag to skip
+the prompt. `build` and `state` never prompt: they put nothing new into the page.
+
+## From a plugin: `ctx.native`
+
+Needs the `native` permission. When a plugin runs, the bridge is connected by construction — the
+host does not activate plugins until the socket is up — so there is nothing to probe and no
+`available` flag. Three methods:
+
+```ts
+interface NativeApi {
+  targets(): Promise<readonly NativeTarget[]>;
+  notify(options: NativeNotifyOptions): Promise<NativeNotifyResult>;
+  call(service: string, method: string, params?: unknown): Promise<unknown>;
 }
 ```
 
-```ts
-// Racy: may be false purely because the probe has not come back yet.
-if (!ctx.native.available) return;
-```
+Every one is a bridge call, and each `service/method` is confirmed by the user the first time
+the plugin uses it — *Plugin {name} ({id}) wants to call the bridge: notify/send*, with the
+parameters in the details. See [Permissions](permissions.md). A denied call rejects with a
+`PermissionError`.
 
-`available` is the right choice *later* — in a settings panel, say, where you want to render the
-current state without awaiting anything. `ready` resolves once and is shared between all readers.
+### Notifications, targetable
 
-### Three states, not two
-
-`status` is the finer answer, for anything that shows the user a colour:
-
-| `status` | Meaning | Shown as |
-| :--- | :--- | :--- |
-| `not_detected` | nothing answered the health probe — not installed, or not started | grey |
-| `running_not_connected` | the daemon answered, but the socket is not open yet, or any more | yellow |
-| `connected` | the socket is open; calls go through | green |
-
-The page cannot tell an uninstalled daemon from an installed one that is stopped, so there is
-deliberately no state claiming to.
-
-A call made while the socket is down does not fail at once: it forces a reconnect and waits up to
-its timeout. The first call after the user starts the daemon is therefore the one that works, not
-the one that tells them to retry.
-
-## Targeting
-
-Each destination is a separately addressable **sink**. This is the whole point of the API: one call
-can go to VR only, the desktop only, or both with different presentation.
+On Linux this is the only route to VR overlays and the desktop, since VRCNext's own
+notification features are Windows-gated — see the [platform matrix](limitations.md). Each
+destination is a separately addressable **sink**, which is the point: one call can go to VR only,
+the desktop only, or both with different presentation.
 
 ```ts
 // VR only — nothing on the monitor.
@@ -97,114 +156,76 @@ await ctx.native.notify({
   opacity: 0.85,
   alwaysShow: true,
 });
-```
 
-```ts
 // Both, presented differently in each.
 await ctx.native.notify({
   title: 'Player joined',
   content: 'on the desktop',
   timeoutSecs: 4,
-  overrides: {
-    wayvr: { content: 'tall panel in VR', height: 220, opacity: 0.85 },
-  },
+  overrides: { wayvr: { content: 'tall panel in VR', height: 220, opacity: 0.85 } },
 });
 ```
 
-Omitting `sinks` means every target the bridge has. `overrides` patches fields for one target
-alone; anything not patched is inherited. An override naming a target you are not delivering to is
-ignored, so carrying presentation for an overlay the user does not run costs nothing.
+Omitting `sinks` means every target the bridge has. `overrides` patches fields for one target;
+an override naming a target you are not delivering to is ignored, so carrying presentation for an
+overlay the user does not run costs nothing.
 
-## Discover targets; do not hard-code them
-
-```ts
-const targets = await ctx.native.targets();
-// [{ name: 'wayvr', health: 'down', honours: ['height', 'opacity', ...], description: '...' }]
-```
-
-Hard-coding `'wayvr'` works today and breaks the moment someone runs a different overlay. Each
-target reports what it `honours`, because not every field means something everywhere:
+**Discover targets rather than hard-coding them.** `targets()` returns each sink's `name`,
+`health` (`up`, `unknown`, `down` — `unknown` is honest for fire-and-forget UDP) and the fields it
+`honours`:
 
 | Field | `wayvr` | `freedesktop` |
 | :--- | :--- | :--- |
 | `title`, `content`, `timeoutSecs`, `icon`, `sourceApp`, `sound` | yes | yes |
-| `volume`, `audioPath` | yes | no |
-| `height`, `opacity`, `alwaysShow` | yes | no |
+| `volume`, `audioPath`, `height`, `opacity`, `alwaysShow`, `useBase64Icon` | yes | no |
 | `urgency` | no | yes |
-| `useBase64Icon` | yes | no — the spec takes a pixel buffer, not an encoded image |
 
-A field a target does not honour is ignored, not an error.
+**Partial delivery is success.** `notify()` resolves `{ ok, delivered, failed }`; `ok` is true
+when at least one target accepted, because that is what happened. It never rejects for an overlay
+that is not running — that is a normal state, not an exception. Inspect `failed` if you care
+which.
 
-## Partial delivery is success
+### Any service
 
-```ts
-const result = await ctx.native.notify({ title: 'Hello' });
-// { ok: true, delivered: ['freedesktop'], failed: [{ sink: 'wayvr', error: '...' }] }
-```
+`call(service, method, params)` reaches any bridge service over the shared socket, so a bridge
+that grows a new service is usable from a plugin immediately, without a plugin-system release.
+It rejects when the socket closes before the answer, on timeout, or when the bridge answers with
+an error — the latter as a `NativeRequestError` carrying the bridge's own `code`.
 
-`ok` is true when **at least one** target accepted — because that is what happened: the
-notification reached the user somewhere. Inspect `failed` if you care which.
+### Limits
 
-## Services beyond notifications
-
-The bridge is a service host, not a notification daemon. `call()` is the forward-compatible
-path — a bridge that grows a new service is usable immediately, without waiting for a
-plugin-system release:
-
-```ts
-const result = await ctx.native.call('notify', 'targets', {});
-```
-
-`describe()` tells you what a running bridge actually offers:
-
-```ts
-const description = await ctx.native.describe();
-// { version: '0.1.0', services: { notify: { methods: [...], targets: [...] } } }
-```
-
-## Limits
-
-Requests are validated and bounded by the bridge. Exceeding a limit produces a rejection from
-`call()`, or a `failed` entry from `notify()`:
+The bridge validates and bounds every request. Exceeding a limit is a rejection from `call()` or
+a `failed` entry from `notify()`:
 
 | Field | Limit |
 | :--- | :--- |
 | `title` | 200 characters, no control characters, required |
-| `content` | 2000 characters; newlines and tabs allowed |
-| `icon` | 128 KB — but a base64 icon over ~65 KB cannot fit in a UDP datagram and `wayvr` will refuse it |
+| `content` | 2000 characters |
+| `icon` | 128 KB — but a base64 icon over ~65 KB cannot fit in a UDP datagram and `wayvr` refuses it |
 | `timeoutSecs` | 0–60; `0` means the target's default |
-| `volume`, `opacity` | 0–1, finite |
+| `volume`, `opacity` | 0–1 |
 | `height` | 16–1024 |
 | `sinks` | at most 8 names, 32 characters each |
-| request body | 192 KB |
 
 There is also a rate limit — 5/s with a burst of 10 by default, shared between the socket and
-plain HTTP so switching transports buys nothing. A notification puts pixels in front of someone
-wearing a headset; a runaway loop is otherwise an accident that needs them to take it off.
-
-## If you moved the daemon
-
-The bridge's `--listen` is configurable, so the host's endpoint is too. **Plugins → Plugin
-System → VRCNext Bridge** has an editable *Endpoint* field; changing it reconnects and re-probes
-immediately and remembers the choice. `ctx.native.endpoint` reports where the host is currently looking.
-
-## Installing it
-
-See the [bridge README](https://github.com/vrcnext-plugins/vrcnext-bridge) and its
-[running guide](https://github.com/vrcnext-plugins/vrcnext-bridge/blob/main/docs/running.md).
-**Plugins → Plugin System** in VRCNext shows the three-state dot, which targets exist, and has a
-**Re-check** button for after you have just started it. The dot follows the socket, so it turns
-green on its own once the daemon is up.
+plain HTTP. A notification puts pixels in front of someone wearing a headset; a runaway loop is
+otherwise an accident that needs them to take it off.
 
 ## Security, briefly
 
-The bridge listens on loopback only, and requires `Content-Type: application/json` on HTTP calls
-specifically so that browsers must send a CORS preflight — which it refuses for origins that are
-not loopback. A WebSocket has no preflight, so the bridge checks the upgrade's `Origin` header
-itself and refuses the same origins. That is what stops an arbitrary web page the user has open
-from pushing notifications into their headset. No sink may ever execute a program. The full reasoning is in the
-[bridge README](https://github.com/vrcnext-plugins/vrcnext-bridge#security).
+Loopback only, with no override flag. HTTP calls must be `application/json` so browsers must
+preflight, and the preflight is refused for non-loopback origins; the WebSocket upgrade checks
+`Origin` itself, since CORS does not cover it; the pairing token covers what an origin check
+cannot. No service may execute a program or write to a caller-chosen path, except the build
+module's one checksum-verified binary. The full reasoning is in the
+[bridge README](https://github.com/vrcnext-plugins/vrcnext-bridge#security); what it means for
+plugins is on the [security model](security.md) page.
 
-From a plugin author's point of view the relevant part is narrower: the bridge is not a sandbox
-escape you are being handed, it is a narrow set of message-passing capabilities. See the
-[security model](security.md) for what plugins can already do without it.
+## Running it by hand
+
+The installer registers autostart (systemd user unit, launchd agent, or a Scheduled Task). To
+run, inspect or troubleshoot it directly — `--print-token`, `--data-dir`, "no session bus",
+`esbuild checksum mismatch` — see the bridge's
+[running guide](https://github.com/vrcnext-plugins/vrcnext-bridge/blob/main/docs/running.md).
+
+[← Notifications](notifications.md) · [Context menus →](context-menus.md)

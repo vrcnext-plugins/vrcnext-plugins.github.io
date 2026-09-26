@@ -1,94 +1,76 @@
 ---
-title: Publishing
+title: Publishing & updates
 ---
 
-# Publishing
+# Publishing & updates
 
 [← Back to index](./)
 
-## The manifest
+There is no registry and no repository manifest. A plugin is published the moment its repository
+is reachable over `https://` with a valid [`plugin.json`](plugin-json.md) and `main.ts` at the
+root. Users install it by pasting the repository URL into the Plugins tab; the
+[bridge](native-companion.md) clones the default branch and compiles it.
 
-One `vrcnext-plugins.json` at your repository root describes every plugin it houses.
+## What to push
 
-```json
-{
-  "formatVersion": 1,
-  "name": "My VRCNext Plugins",
-  "plugins": [
-    {
-      "id": "friend-alerts",
-      "name": "Friend Alerts",
-      "version": "1.2.0",
-      "description": "Toasts when a friend comes online.",
-      "entry": "dist/friend-alerts.js",
-      "apiVersion": "^0.1.0",
-      "author": "you",
-      "homepage": "https://github.com/you/my-plugins",
-      "icon": "notifications"
-    }
-  ]
-}
+```
+plugin.json        the manifest
+main.ts            default-exports definePlugin({...})
+src/**             optional, imported from main.ts
+README.md          optional
 ```
 
-| Field | Rules |
-| :--- | :--- |
-| `id` | Required. Lowercase kebab-case, 3–64 chars. Must equal `plugin.id` in code. |
-| `version` | Required. Semver — auto-update compares with it. |
-| `entry` | Required. Repo-relative path to the built ESM bundle. |
-| `apiVersion` | Required. Semver **range** of `@vrcnext/plugin-api`. |
-| `name`, `description`, `author`, `homepage`, `icon` | `name` required; rest optional. |
+Nothing is built on your side and there is no `dist/` to commit. The bridge imports `main.ts` as
+TypeScript straight from the clone, so what users run is what is in your default branch. Any
+dependency must be committed into the repository — the bridge runs no package manager — and it
+is scanned by the [source policy](source-policy.md) like your own code.
 
-`entry` is rejected if it is absolute, contains `://`, uses backslashes, or has any `.` or `..`
-segment — it must stay inside the repository.
-
-## Parsing is forgiving by design
-
-One malformed entry is skipped with a warning; the rest of the manifest still loads. A duplicate
-`id` keeps the first. A `formatVersion` newer than the host supports rejects the whole file with
-a message telling the user to update.
+Run the template's `npm run check` before pushing. Its ESLint config flags most policy rules
+locally, and a repository that fails the policy or the manifest schema is refused at install
+with the file, line and rule, which is a poor first impression.
 
 ## Supported repository URLs
 
-| Form | Example |
-| :--- | :--- |
-| Shorthand (GitHub) | `owner/repo` |
-| GitHub URL | `https://github.com/owner/repo` |
-| Branch or tag | `https://github.com/owner/repo/tree/release/2026` |
-| Self-hosted Gitea | `https://git.example.com/owner/repo` |
+Any `https://` git remote the bridge can clone anonymously: GitHub, a self-hosted Gitea or
+Forgejo, GitLab. No shorthand, no `/tree/<branch>` suffix — the bridge clones the remote's
+default branch, depth 1. To ship from a specific branch, make it the default branch of that
+repository.
 
-Only `https://`. Traversal segments are rejected before URL parsing, so a normalising `..`
-cannot silently retarget a different repository.
+## How updates reach users
 
-## Commit your `dist/`
-
-Users fetch the built file directly — the host never runs your build. If `dist/` is gitignored,
-your plugin cannot be installed.
-
-## Versioning and auto-update
-
-The host checks on boot and every six hours: it re-reads each repo manifest and re-downloads any
-plugin whose manifest `version` is **strictly newer** by semver than the installed one. If the
-plugin was running it is restarted; **settings are preserved** because they are keyed separately
-from the bundle.
+Nothing is automatic. The manager checks for updates when the user opens it or presses the
+button: the bridge fetches each clone's origin and reports how many commits it is behind, with
+a changelog of commit summaries (up to 50; a clone is shallow, so a count of 50 means "at
+least"). The user presses **Update** (or **Update all**), confirms **on the desktop** — one
+prompt per plugin — and the bridge clones afresh, re-validates the manifest and the policy,
+swaps the new tree in only if it passes, rebuilds, and the page offers **Reload**. There is
+never a merge, and a failed validation leaves the old tree exactly as it was.
 
 Consequences:
 
-- Bump `version` on every release or nobody gets the update.
-- Prereleases sort *below* their release: `1.0.0-beta.1` does not update over `1.0.0`.
-- A non-semver `version` is treated as "no update available".
-- Pushing to the tracked branch ships to every user within six hours. Tag a branch in the repo
-  URL (`/tree/stable`) if you want a slower channel.
+- **Updates are tracked by commit, not by `version`.** Bump `version` anyway — it is what the
+  user sees in the manager — but forgetting to does not hide a release.
+- **Every push to the default branch is a release.** Users see it as "N commits behind" with
+  your commit summaries as the changelog, so write summaries a user can read. Develop on a
+  branch and merge when ready.
+- **Settings and saved permission grants survive an update.** They live in the bridge's state
+  store under the plugin's id, not in the clone.
+- **A new permission or target needs the user's consent again.** New entries in `permissions`
+  show in the enable modal; a new host, action or event is confirmed on first use.
 
-### `apiVersion` gating
+## `apiVersion`
 
-Checked before activation. If the host's API version does not satisfy your range, the plugin is
-refused with a message naming both versions. Widen the range only when you have actually tested
-against the newer API.
+`apiVersion` is checked before activation. If the host's `@vrcnext/plugin-api` version does not
+satisfy your range, the plugin is refused with a message naming both versions. Only exact
+versions, `^`, `~` and comparator lists (`>=0.2.0 <0.4.0`) are accepted — see
+[plugin.json](plugin-json.md). Widen the range only when you have actually tested against the
+newer API.
 
-### Host auto-update
+## Updating the host itself
 
-The host **detects** a newer release and tells the user, but cannot install it: it is a file in
-VRCNext's theme folder and the page cannot write to disk. Updating means re-running
-`scripts/install-into-vrcnext.sh`.
+The host is compiled into the bundle from sources the installer placed under
+`~/.vrcnext-plugins/host/`. Re-running the installer is an upgrade: it replaces the bridge, the
+pinned `esbuild` and the host sources, keeps your plugins, state and token, and rebuilds. The
+page does not check for host releases on its own.
 
-[← Routes & deep links](routes-and-links.md) · [Security model →](security.md)
+[← Using TSX](tsx.md) · [Security model →](security.md)

@@ -1,0 +1,79 @@
+---
+title: Source policy
+---
+
+# Source policy
+
+[← Back to index](./)
+
+A plugin is compiled into the same bundle as the host and runs with the page's authority. There
+is no sandbox to put it in, so the next best thing is to refuse, *before compiling*, the handful
+of constructs that let code reach past the `ctx.*` API: evaluating strings, touching `window` or
+storage directly, opening its own sockets, loading code at runtime.
+
+Before every install and update the bridge scans every `.ts`, `.tsx`, `.mts`, `.cts`, `.js`,
+`.jsx`, `.mjs` and `.cjs` file in the repository (the extensions esbuild resolves, so renaming a
+file buys nothing). One hit refuses the operation with `policy: file:line rule`; an update that
+fails leaves the previously installed tree untouched.
+
+## The rules
+
+In the order the bridge reports them:
+
+| Rule | Matches |
+| :--- | :--- |
+| `eval` | `eval(` |
+| `new Function` | `new Function` |
+| `globalThis` | `globalThis.` |
+| `window` | `window.` — no exceptions, not even `window.location.href` |
+| `document.cookie` | `document.cookie` |
+| `localStorage` | `localStorage` |
+| `sessionStorage` | `sessionStorage` |
+| `indexedDB` | `indexedDB` |
+| `XMLHttpRequest` | `XMLHttpRequest` |
+| `bare fetch` | `fetch(` — `ctx.http.fetch(` and `ctx.router.fetch(` are fine |
+| `WebSocket` | `WebSocket(` |
+| `dynamic import` | `import(` |
+| `script tag` | `<script` anywhere |
+| `innerHTML assignment` | `.innerHTML =` (a comparison or a read is fine) |
+| `insertAdjacentHTML` | `insertAdjacentHTML` anywhere |
+| `setTimeout with a string` | `setTimeout(` whose first argument is a string literal |
+| `require` | `require(` |
+| `process` | `process.` |
+
+Most rules match the text only when it is *bare*: preceded by something other than an identifier
+character or a dot. So `retrieval(x)` does not trip `eval`, and `prefetch(` does not trip
+`fetch`, but `window.` is refused wherever it appears.
+
+Also enforced: at most **200 source files** and **2 MiB** of source in total, no symlinks inside
+the clone. `.git/` and non-source files such as `README.md` are not scanned.
+
+The list lives in one Rust module in the bridge (`crates/vrcnext-bridge-plugins/src/policy.rs`)
+with a unit test per rule, and this page mirrors it.
+
+## What it is and is not
+
+It is a **text scan**, not a parser. It is meant to catch honest mistakes and make dishonest
+ones obvious in a review, not to be unbypassable, and the bridge's own documentation says so.
+A plugin that wants to reach `window` badly enough can find a spelling this list does not cover.
+What the policy guarantees is narrower and still useful: a plugin that follows it reaches the
+network only through `ctx.http`, the clipboard only through `ctx.clipboard`, VRCNext only through
+`ctx.bridge`, and all of those are gated by [permissions](permissions.md) the user can see.
+
+Plain DOM work is allowed. `document.createElement`, `addEventListener`, `textContent`,
+`IntersectionObserver` and friends are how plugin UI gets built; the policy is about reaching
+*outside* the plugin's own panels, not about building them.
+
+## Finding problems before the bridge does
+
+The template's `eslint.config.mjs` reports most of these as lint errors, so `npm run check` in
+your repository catches them locally. The bridge's message names the file, line and rule, so the
+rest are one-line fixes.
+
+## Dependencies
+
+The bridge runs no package manager. Anything you import must be committed into the repository,
+and it is scanned like your own code and counts against the 200-file and 2 MiB limits. A library
+that touches `window.` will be refused. Keep dependencies small and vendored, or do without.
+
+[← Permissions](permissions.md) · [Settings →](settings.md)
