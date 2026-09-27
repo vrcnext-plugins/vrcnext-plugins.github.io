@@ -36,7 +36,10 @@ changes anything on the account; for that you need `host:actions` and `ctx.bridg
 *Plugin {name} ({id}) wants to read VRChat data through VRCNext*. One answer covers every method.
 
 `self()` is the exception to the "await" rule: it is synchronous, because VRCNext pushes the
-signed-in account, and it returns `undefined` until the grant is in.
+signed-in account, and it returns `undefined` until the grant is in. It is also the fullest
+object here — a `VrcSelf` carries your bio, bio links, pronouns, languages, date joined, current
+avatar, home location and whether VRChat is running, because the push already contained all of
+it.
 
 ## Lists
 
@@ -44,9 +47,11 @@ VRCNext keeps these lists anyway and pushes them when they change. The host mirr
 each, so a call is usually free and never a request the user did not cause.
 
 ```ts
-ctx.vrchat.self();                    // VrcUserSummary | undefined, synchronous
+ctx.vrchat.self();                    // VrcSelf | undefined, synchronous
 await ctx.vrchat.friends();           // your friend list
 await ctx.vrchat.favoriteFriends();
+await ctx.vrchat.favoriteFriendGroups();  // the same, in their groups, with your names for them
+await ctx.vrchat.moderationCounts();  // how many you blocked, muted, hid the avatar of, …
 await ctx.vrchat.recentPlayers();     // players VRCNext recorded near you, newest first
 await ctx.vrchat.favoriteWorlds();
 await ctx.vrchat.recentWorlds();      // worlds you visited

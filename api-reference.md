@@ -124,6 +124,9 @@ function satisfies(version: string, range: string): boolean;   // malformed inpu
 function timeAgo(iso: string, now?: number): string;   // "just now", "3 minutes ago", "2 hours ago", "5 days ago"
 ```
 
+`timeAgo(at, now?)` takes an ISO string, an epoch or a `Date`, and reports one unit: `just now`,
+`3 minutes ago`, `2 hours ago`, `5 days ago`, `3 months ago`, `2 years ago`.
+
 ## Templates
 
 ```ts
@@ -231,17 +234,19 @@ back when nothing is left. `webhookPayload` always sets `allowed_mentions: { par
 
 `ctx.vrchat`, permission `vrchat`. See [VRChat data](vrchat-data.md).
 
-`VrchatApi` · `VrcUserSummary` · `VrcUser` · `VrcAvatarSummary` · `VrcAvatar` ·
+`VrchatApi` · `VrcUserSummary` · `VrcSelf` · `VrcUser` · `VrcFavoriteGroup` · `VrcModerationCounts` · `VrcAvatarSummary` · `VrcAvatar` ·
 `VrcWorldSummary` · `VrcWorld` · `VrcGroupSummary` · `VrcGroup` · `VrcInstance` ·
 `VrcInstanceUser` · `VrcFriendInstance` · `VrcTimelineEvent` · `VrcSearchPage<T>` ·
 `VrcLookupOptions` · `VrcSearchOptions` · `PerformanceRank` · `PERFORMANCE_RANKS` · `rankIndex()`
 
 ```ts
 interface VrchatApi {
-  self(): VrcUserSummary | undefined;                                   // synchronous
+  self(): VrcSelf | undefined;                                          // synchronous, and the fullest object here
 
   friends(o?: VrcLookupOptions): Promise<readonly VrcUserSummary[]>;
   favoriteFriends(o?): Promise<readonly VrcUserSummary[]>;
+  favoriteFriendGroups(o?): Promise<readonly VrcFavoriteGroup[]>;       // { name, displayName, userIds, users }
+  moderationCounts(o?): Promise<VrcModerationCounts>;                   // { blocked, muted, hiddenAvatar, interactOff, muteChat }
   recentPlayers(o?): Promise<readonly VrcUserSummary[]>;
   favoriteWorlds(o?): Promise<readonly VrcWorldSummary[]>;
   recentWorlds(o?): Promise<readonly VrcWorldSummary[]>;

@@ -89,6 +89,13 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | [Routes & deep links](routes-and-links.md) | In-page HTTP routes, `vrcn://` links, and their limits. |
 | [Logging](logging.md) | The logger, the Logs panel, the bridge's log file. |
 
+**Plugins**
+
+| Plugin | What it does |
+| :--- | :--- |
+| [Club Security](https://github.com/vrcnext-plugins/vrcnext-club-security-plugin) | Per-club presets that report who joins your instance and whether they meet the club's rules. |
+| [Bio Updater](https://github.com/vrcnext-plugins/vrcnext-bio-updater-plugin) | Writes your bio, status, pronouns and links from templates, fitted by priority rather than cut. |
+
 **Reference**
 
 | Page | What it covers |
