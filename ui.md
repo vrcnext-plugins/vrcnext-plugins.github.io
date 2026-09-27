@@ -54,6 +54,11 @@ Also re-attached automatically when VRCNext re-renders the dashboard.
 
 ## Settings card
 
+The card appears under a **Plugins** section the host adds to VRCNext's own Settings tab, next to
+General, Appearance and the rest, and the plugin's entry on the Manage Plugins tab gets a
+**Settings** button that jumps there. Every setting in the plugin's schema is rendered as a row
+first; `render` adds anything custom below them.
+
 ```ts
 ctx.ui.addSettingsCard({
   title: 'My Plugin',
