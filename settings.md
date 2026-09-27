@@ -88,6 +88,11 @@ storage; see the warning at the bottom of this page.
 in the order the options were declared, and honours `min`/`max` counts. Both accept a `description`
 per option.
 
+`select` is VRCNext's own dropdown — the host hands the `<select>` to the app's `initVnSelect`,
+so it opens the same panel its settings do. `multiselect` draws VRCNext's toggle pills, the ones
+its theme and cursor pickers use; more than three of them stack under the label instead of
+crowding the end of the row.
+
 ```ts
 days: {
   kind: 'multiselect',
@@ -120,6 +125,11 @@ homeWorld: { kind: 'world', label: 'Home world', default: '' },   // every world
 Your plugin never sees the picker and needs no permission for it: the user chooses, you get ids.
 Resolve them later with [`ctx.vrchat`](api-reference.md#vrchat-data), or open the same picker
 yourself with `ctx.ui.pickEntity`.
+
+The picker's field filters the scope on screen as it is typed, and is the search query itself
+when the scope is `search`. In the settings row, each chosen thing is a profile row with its own
+×, named rather than shown as an id — the id is what your plugin stores, not what the user
+picked.
 
 ### Discord embeds
 
