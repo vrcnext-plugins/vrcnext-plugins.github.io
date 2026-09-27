@@ -123,15 +123,33 @@ function satisfies(version: string, range: string): boolean;   // malformed inpu
 function timeAgo(iso: string, now?: number): string;   // "just now", "3 minutes ago", "2 hours ago", "5 days ago"
 ```
 
+## Templates
+
 ```ts
-function fillTemplate(template: string, values: Record<string, string | undefined>, options?: { dropEmptyLines?: boolean }): string;
+type TemplateValue = string | number | boolean | null | undefined | TemplateValue[] | { [key: string]: TemplateValue };
+function renderTemplate(template: string, values: Record<string, TemplateValue>, options?: { dropEmptyLines?: boolean }): string;
+function validateTemplate(template: string): TemplateError | undefined;
 function templatePlaceholders(template: string): readonly string[];
+class TemplateError extends Error {}
 ```
 
-`fillTemplate` replaces `{name}` from `values`, leaves unknown placeholders visible, and (by
-default) drops a line whose placeholders all came out empty — the shape a user-editable
-notification format needs. Small pure helpers plugins keep needing live in the api package, not
-in plugins.
+A small, safe template language for user-editable messages — Jinja-shaped, evaluated by a
+walker over a fixed grammar, so a template can never run code or reach a prototype:
+
+```text
+Player {name} joined                          {name} is short for {{ name }}
+18+: {{ "yes" if ageVerified else "no" }}     Python-style conditional
+Rejoin: {{ rejoin ? "yes" : "no" }}           C-style conditional
+{% if inGroup == false %}NOT A MEMBER{% elif inGroup %}member{% else %}unknown{% endif %}
+{{ pcRank | upper }} · {{ avatar | default: "unknown avatar" }} · {{ tags | join: "+" }}
+```
+
+Expressions: literals, dotted names, `== != < <= > >=`, `and or not` (or `&& || !`), `+`/`-`,
+both conditional forms, and filters `upper lower capitalize trim length default yesno join
+replace truncate`. A missing name renders empty; a line whose placeholders all rendered empty is
+dropped (`dropEmptyLines`). A broken template throws `TemplateError`; `validateTemplate` reports
+it without rendering. Small pure helpers plugins keep needing live in the api package, not in
+plugins.
 
 ## Settings
 
