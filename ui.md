@@ -61,8 +61,12 @@ Also re-attached automatically when VRCNext re-renders the dashboard.
 The card appears in a Settings section **of its own**, named after the plugin and filed below the
 host's Plugin System and Plugins sections, under a divider. The plugin's row in the Plugins list
 gets a **Settings** button that jumps there. A plugin with several cards gets one section
-carrying all of them. Every setting in the plugin's schema is rendered as a row first; `render`
-adds anything custom below them.
+carrying all of them.
+
+`render` draws the card's own content, and the plugin's schema is rendered as rows underneath —
+on the **first** settings card only, so a plugin with several cards does not get the same form
+painted onto each of them. Pass `settings: true` when the rows belong on a later card, or
+`settings: false` to keep a card free of them.
 
 ```ts
 ctx.ui.addSettingsCard({
@@ -92,6 +96,10 @@ section.attach(k.card({ title: 'Status', icon: 'info', children: [/* rows */] })
 
 // A settings card can be filed here instead of in the plugin's automatic section.
 ctx.ui.addSettingsCard({ title: 'My Plugin', icon: 'tune', section });
+
+// Two cards: the schema rows go on the second one.
+ctx.ui.addSettingsCard({ title: 'Status',  icon: 'info', settings: false, render: (c) => {/* … */} });
+ctx.ui.addSettingsCard({ title: 'Options', icon: 'tune', settings: true });
 ```
 
 ## Sidebar group
