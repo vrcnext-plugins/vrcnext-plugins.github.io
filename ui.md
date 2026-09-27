@@ -189,11 +189,12 @@ full-width row on a maximised window leaves a lot of dead space between the labe
 
 | Call | Produces |
 | :--- | :--- |
-| `k.row({ label, value, detail })` | A label/value row. A string `value` renders as muted text; pass a node for anything else. Rows rule themselves between siblings. |
+| `k.row({ label, value, detail, stacked })` | A label/value row. A string `value` renders as muted text; pass a node for anything else. `stacked` puts the value on its own full-width line. Rows rule themselves between siblings. |
 | `k.toggleRow({ label, value, onChange, detail })` | The same row with VRCNext's switch. |
 | `k.button({ label, icon, onClick, active, disabled, round })` | A `vrcn-button`. |
 | `k.buttonRow(...children)` | A spaced horizontal strip. |
 | `k.textField({ value, placeholder, onCommit })` | A `vrcn-edit-field`. Commits on blur and Enter, never per keystroke. |
+| `k.textArea({ value, placeholder, rows, onCommit })` | A multi-line `vrcn-edit-field`. Put it in `k.row({ stacked: true })` so it gets the full width. |
 | `k.dropdown({ options, selected, onChange })` | A `vrcn-dropdown`. |
 | `k.badge(tone, text)` | A coloured pill: `ok`, `warn`, `err`, `accent`, `cyan`, `neutral`. |
 | `k.stat({ label, value, tone })` | A big number with a caption. |

@@ -14,6 +14,7 @@ const settings = {
   enabled: { kind: 'boolean', label: 'Enabled', default: true },
   threshold: { kind: 'number', label: 'Threshold', default: 5, min: 0, max: 10, step: 1 },
   note: { kind: 'string', label: 'Note', default: '', placeholder: 'Optional' },
+  template: { kind: 'string', multiline: true, label: 'Template', default: 'Hi {name}' },  // a text area on its own line
   mode: {
     kind: 'select',
     label: 'Mode',

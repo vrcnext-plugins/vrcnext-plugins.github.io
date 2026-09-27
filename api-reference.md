@@ -123,7 +123,15 @@ function satisfies(version: string, range: string): boolean;   // malformed inpu
 function timeAgo(iso: string, now?: number): string;   // "just now", "3 minutes ago", "2 hours ago", "5 days ago"
 ```
 
-Small pure helpers plugins keep needing live in the api package, not in plugins.
+```ts
+function fillTemplate(template: string, values: Record<string, string | undefined>, options?: { dropEmptyLines?: boolean }): string;
+function templatePlaceholders(template: string): readonly string[];
+```
+
+`fillTemplate` replaces `{name}` from `values`, leaves unknown placeholders visible, and (by
+default) drops a line whose placeholders all came out empty — the shape a user-editable
+notification format needs. Small pure helpers plugins keep needing live in the api package, not
+in plugins.
 
 ## Settings
 
