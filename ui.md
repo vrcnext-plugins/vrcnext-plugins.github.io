@@ -13,13 +13,14 @@ font-size offset and any active custom theme. Hand-rolling a `<button>` loses al
 
 `ctx.ui` needs no permission: it can only draw the plugin's own panels.
 
-Installing the host adds a **Plugins** group to the sidebar (a divider plus a puzzle-piece
-entry) and mirrors it as a **Plugins** menu in the top bar. Both drive the same three tabs:
-**Manage Plugins** (the Bridge card, install by URL, enable, update, uninstall, saved
-permissions), **Logs**, and **Plugin System** (status, platform matrix, diagnostics).
+The host's own pages are two sections in VRCNext's Settings tab, after a divider below
+VRCNext's own: **Plugin System** (the Bridge card, status, platform matrix, diagnostics, the
+live log) and **Plugins** (install by URL, enable, update, uninstall, saved permissions, and
+every plugin's settings card). The **Plugins** group the host adds to the sidebar, mirrored as a
+**Plugins** menu in the top bar, only holds shortcuts to those two sections.
 
 Your plugin's own `addNavTab` entries are separate top-level sidebar buttons — they are not
-placed inside that group.
+placed inside that group. The sidebar is for pages that are really pages.
 
 ## Sidebar tab
 
@@ -54,9 +55,9 @@ Also re-attached automatically when VRCNext re-renders the dashboard.
 
 ## Settings card
 
-The card appears under a **Plugins** section the host adds to VRCNext's own Settings tab, next to
-General, Appearance and the rest, and the plugin's entry on the Manage Plugins tab gets a
-**Settings** button that jumps there. Every setting in the plugin's schema is rendered as a row
+The card appears in the **Plugins** section of VRCNext's own Settings tab, below the host's
+install-and-manage cards, and the plugin's entry there gets a **Settings** button that scrolls to
+it. Every setting in the plugin's schema is rendered as a row
 first; `render` adds anything custom below them.
 
 ```ts

@@ -61,7 +61,7 @@ none of them holds against a malicious plugin the user has already enabled.
   risk*) can act on your account or drop VRCNext's own traffic; a plugin that draws its own UI
   needs neither.
 - Prefer **Confirm** over **Confirm & Save** for anything you would not expect the plugin to do
-  every session. Saved grants are listed under **Manage Plugins → Permissions** with a Revoke
+  every session. Saved grants are listed under **Settings → Plugins → Permissions** with a Revoke
   button.
 - Confirm installs and updates only when *you* pressed the button in VRCNext moments ago. A
   desktop prompt you did not expect is a Deny.

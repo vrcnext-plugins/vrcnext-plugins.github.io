@@ -87,7 +87,7 @@ try {
 
 ## Revoking
 
-**Manage Plugins → Permissions** on each plugin's card lists every saved grant with a **Revoke**
+**Settings → Plugins → Permissions** on each plugin's card lists every saved grant with a **Revoke**
 button and a **Forget all**. A revoked grant is simply asked about again next time; nothing
 restarts.
 
