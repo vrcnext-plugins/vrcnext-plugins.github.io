@@ -40,14 +40,16 @@ cheap synchronous check for rendering state.
 
 Inside a declared category, each *concrete* target is confirmed the first time the plugin
 touches it. Targets pre-declared in `plugin.json` (`hosts`, `actions`, `events`) were granted at
-enable, so they never prompt. Everything else does, one modal at a time; identical concurrent
-requests share one prompt. The wording below is the user-facing contract, taken from the host.
+enable, so they never prompt. For `hosts`, anything else prompts, one modal at a time; identical
+concurrent requests share one prompt. For `actions` and `events` there is no "anything else" —
+a name outside the list is refused, so what the enable dialog lists is the whole of what the
+plugin can reach. The wording below is the user-facing contract, taken from the host.
 
 | Category | Asked | Title |
 | :--- | :--- | :--- |
 | `network` | per host | *Plugin {name} ({id}) wants to request data from {host}* for GET/HEAD, *… wants to send data to {host}* for anything else. Details: method, URL, headers, body. |
-| `host:actions` | per action name | *… wants to call VRCNext action {action}*. Details: the payload. |
-| `host:events` | per event name | *… wants to listen to {event}*; `onAny` asks *… wants to listen to every VRCNext event*. |
+| `host:actions` | never — the `actions` list is exhaustive and an undeclared name throws | — |
+| `host:events` | never — the `events` list is exhaustive and an undeclared name throws; `"*"` declares the whole stream | — |
 | `host:intercept` | once per plugin | *… wants to observe and drop actions VRCNext sends to its backend* |
 | `native` | per `service/method` | *… wants to call the bridge: {service}/{method}*. Details: the parameters. |
 | `osc` | once per plugin | *… wants to send and receive OSC through VRCNext* |

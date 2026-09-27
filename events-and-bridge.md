@@ -11,13 +11,18 @@ actions** and **310 inbound events**. Plugins get both, behind three permissions
 
 | Permission | Tone | Unlocks | Confirmed on first use |
 | :--- | :--- | :--- | :--- |
-| `host:events` | low | `ctx.events`, `ctx.deepLinks` | each event name not in `plugin.json`'s `events`; `onAny` once |
-| `host:actions` | high | `ctx.bridge.send`, `ctx.bridge.request` | each action name not in `actions`, with the payload shown |
+| `host:events` | low | `ctx.events`, `ctx.deepLinks` | granted at enable, for the names in `plugin.json`'s `events` |
+| `host:actions` | high | `ctx.bridge.send`, `ctx.bridge.request` | granted at enable, for the names in `actions`, with the payloads shown |
 | `host:intercept` | high | `ctx.bridge.interceptOutbound` | once per plugin |
 
-Names you list in `plugin.json` are granted when the user enables the plugin; anything else is a
-prompt the first time. Declare what you know you need — one modal at enable beats five in the
-first minute. See [Permissions](permissions.md).
+**The two lists are exhaustive.** An action or event name that is not in `plugin.json` is
+refused — it throws, and no prompt is offered. Both are constants in your source, so your
+manifest can name every one you will ever use, and the enable dialog can therefore show the
+user a complete list of what the plugin reaches. `"*"` declares the whole stream, which is what
+`ctx.events.onAny` needs; the dialog shows that too.
+
+This is deliberately unlike `hosts`, where an undeclared host still prompts: a URL can come
+from a setting the user typed, an action name cannot. See [Permissions](permissions.md).
 
 (`ctx.bridge` is the VRCNext bridge — the Photino channel — not the
 [VRCNext Bridge](native-companion.md) daemon, which is `ctx.native`. The name predates the
