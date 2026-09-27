@@ -109,5 +109,10 @@ answer within two minutes is a refusal. See [VRCNext Bridge](native-companion.md
   logs refusals.
 - Ask for what you use. A plugin that declares `host:actions` "just in case" earns a *High risk*
   badge it does not need.
+- To *read* VRChat data, declare `vrchat` (medium) rather than `host:actions` (high). Sending
+  `vrcGet…` actions yourself both asks for more authority than you need and paints VRCNext's
+  modals; [`ctx.vrchat`](vrchat-data.md) reads the same data quietly.
+- Pickers and `ctx.ui.pickEntity` need no permission at all: the user chooses, and the plugin only
+  learns what they chose. Prefer them over reading a whole friend list to build your own list.
 
 [← plugin.json](plugin-json.md) · [Source policy →](source-policy.md)

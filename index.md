@@ -57,7 +57,8 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | Clipboard read and write | `ctx.clipboard` | `clipboard` |
 | Deep links VRCNext delivers | `ctx.deepLinks` | `host:events` (`openDeepLink`) |
 | Sidebar tabs, dashboard cards, settings cards, custom CSS, `ui.kit` | `ctx.ui` | none |
-| Typed, persisted, schema-rendered settings | `ctx.settings` | none |
+| Typed, persisted, schema-rendered settings, including pickers over VRCNext's own data | `ctx.settings` | none |
+| Reading users, avatars, worlds, groups and your instance without opening a dialog | `ctx.vrchat` | `vrchat` |
 | Levelled logging with a live in-app panel | `ctx.logger` | none |
 
 ## Documentation
@@ -84,6 +85,7 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | [Context menus](context-menus.md) | Items, dividers, submenus, entity targets. |
 | [OSC](osc.md) | Sending and receiving OSC through VRCNext. |
 | [Game log](game-log.md) | The VRChat log stream and backlog. |
+| [VRChat data](vrchat-data.md) | Friends, favourites, groups, instances and lookups — without opening VRCNext's dialogs. |
 | [Routes & deep links](routes-and-links.md) | In-page HTTP routes, `vrcn://` links, and their limits. |
 | [Logging](logging.md) | The logger, the Logs panel, the bridge's log file. |
 

@@ -113,6 +113,24 @@ ctx.ui.addSidebarGroup({
 
 Survives VRCNext rebuilding its sidebar, and is removed with the plugin.
 
+## Choosing a VRChat thing
+
+A [picker setting](settings.md#pickers) covers the usual case. When the choice belongs to a button
+rather than a settings row, open the same picker directly:
+
+```ts
+const ids = await ctx.ui.pickEntity({
+  kind: 'user',                      // or 'world' | 'avatar' | 'group' | 'instance'
+  multiple: true,
+  scopes: ['friends', 'favorites'],  // omit for every scope the kind has
+  selected: current,
+});
+if (ids === undefined) return;       // cancelled
+```
+
+It resolves with the chosen ids. No permission is involved: the picker reads VRCNext's data on the
+user's behalf, and the plugin sees only the result.
+
 ## Toasts
 
 ```ts

@@ -31,6 +31,176 @@ const settings = {
 > values; `satisfies` checks the shape without widening it. Drop either and `mode` becomes
 > `string`.
 
+## The kinds
+
+| kind | Value | Control |
+| :--- | :--- | :--- |
+| `boolean` | `boolean` | switch |
+| `number` | `number` | text field, or a slider |
+| `string` | `string` | text field, or a text area |
+| `color` | `'#rrggbb'` | colour swatch |
+| `time` | `'HH:MM'` | time field |
+| `select` | one option value | dropdown |
+| `multiselect` | option values, in declared order | toggle buttons |
+| `user` `world` `avatar` `group` `instance` | a VRChat id, or an array of them | picker over VRCNext's own data |
+| `embed` | an `EmbedTemplate` | Discord-embed editor |
+| `object` | an object shaped like `fields` | its fields, indented |
+| `list` | an array of objects shaped like `item` | cards you add, duplicate, reorder, remove |
+| `custom` | whatever you say | a control you render |
+
+Every kind takes `label`, and optionally `description`, `hidden` and `disabled`. The last two may
+be **predicates** over the plugin's other values, re-evaluated after every change:
+
+```ts
+webhookUrl: {
+  kind: 'string',
+  label: 'Webhook URL',
+  default: '',
+  disabled: (values) => values['postToDiscord'] !== true,
+},
+```
+
+### Numbers
+
+`min`, `max` and `step` bound a text field. `slider: true` makes it a slider; `markers` makes it a
+slider with labelled ticks that stops only on them (pass `stickToMarkers: false` to allow values
+in between). `unit` is shown after the value.
+
+```ts
+volume:  { kind: 'number', label: 'Volume', default: 50, markers: [0, 25, 50, 75, 100], unit: '%' },
+timeout: { kind: 'number', label: 'Timeout', default: 30, min: 1, max: 60, slider: true, unit: 's' },
+```
+
+### Strings
+
+`placeholder`, `multiline` (a text area on its own line, committed on blur), `maxLength`, and
+`format: 'password' | 'url'`. A `password` field is masked in the UI — it is **not** secret
+storage; see the warning at the bottom of this page.
+
+### Choices
+
+`select` stores one option value and infers the literal union. `multiselect` stores several, always
+in the order the options were declared, and honours `min`/`max` counts. Both accept a `description`
+per option.
+
+```ts
+days: {
+  kind: 'multiselect',
+  label: 'Days',
+  default: ['mon'],
+  options: [{ value: 'mon', label: 'Monday' }, { value: 'tue', label: 'Tuesday' }],
+},
+// values.days: readonly ('mon' | 'tue')[]
+```
+
+### Pickers
+
+A `user`, `world`, `avatar`, `group` or `instance` setting stores the **id** (`usr_…`, `wrld_…`,
+`avtr_…`, `grp_…`, or a full instance location). With `multiple: true` it stores an array. The host
+renders a picker over what VRCNext already knows, and `scopes` limits where it may look:
+
+| kind | scopes |
+| :--- | :--- |
+| `user` | `friends` `favorites` `recent` `instance` `search` |
+| `world` | `favorites` `recent` `current` `search` |
+| `avatar` | `own` `favorites` `recent` `search` |
+| `group` | `mine` `search` |
+| `instance` | `current` `friends` `manual` |
+
+```ts
+doorStaff: { kind: 'user',  label: 'Door staff', default: [], multiple: true, scopes: ['friends'] },
+homeWorld: { kind: 'world', label: 'Home world', default: '' },   // every world scope
+```
+
+Your plugin never sees the picker and needs no permission for it: the user chooses, you get ids.
+Resolve them later with [`ctx.vrchat`](api-reference.md#vrchat-data), or open the same picker
+yourself with `ctx.ui.pickEntity`.
+
+### Discord embeds
+
+An `embed` setting stores a template for every part of an embed — title, description, colour,
+author, thumbnail, image, footer, and a list of fields — and each text is a
+[template](api-reference.md#templates). `variables` lists the names you will supply, so the editor
+can show them.
+
+```ts
+report: {
+  kind: 'embed',
+  label: 'Discord report',
+  default: { title: '{name} joined', color: '{resultColor}', timestamp: true },
+  variables: ['name', 'resultColor', 'world'],
+},
+
+// at send time
+const embed = renderEmbed(ctx.settings.get('report'), values);
+if (embed !== undefined) {
+  await ctx.http.fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(webhookPayload(embed, { username: 'My plugin' })),
+  });
+}
+```
+
+`renderEmbed` fills every text, drops what rendered empty, refuses URLs that are not `http(s)`,
+cuts everything to Discord's limits, and returns `undefined` when nothing is left — Discord
+rejects an empty embed. `color` accepts `#rrggbb`, a decimal, or a name (`green`, `orange`, `red`,
+`blue`, `yellow`, `grey`). `webhookPayload` never allows mentions.
+
+### Objects and lists
+
+`object` nests a schema under one key. `list` stores an array of objects shaped like `item`, and
+the user adds, duplicates, reorders and removes them; `titleKey` names the card, `addLabel` the
+button, `max` the ceiling.
+
+```ts
+presets: {
+  kind: 'list',
+  label: 'Presets',
+  titleKey: 'name',
+  addLabel: 'Add preset',
+  default: [],
+  item: {
+    name:  { kind: 'string', label: 'Name', default: 'New' },
+    world: { kind: 'world',  label: 'World', default: '' },
+    embed: { kind: 'embed',  label: 'Embed', default: {} },
+  },
+},
+// values.presets: readonly { name: string; world: string; embed: EmbedTemplate }[]
+```
+
+Both nest freely — a list item may hold a list, a picker or an embed. Every control inside one is
+the same control as at the top level, and an edit anywhere still results in exactly one write of
+the top-level value, so `onChange` fires once.
+
+### Your own control
+
+When no kind fits, `custom` hands you the row. `coerce` decides what may be stored, exactly as the
+built-in kinds do for theirs: return the cleaned value, or `undefined` to fall back to the
+default. Wrap it in `defineCustomSetting<T>` so `T` survives.
+
+```ts
+windowSize: defineCustomSetting<WindowSize>({
+  kind: 'custom',
+  label: 'Window size',
+  default: { width: 800, height: 600 },
+  coerce: (value) => (isWindowSize(value) && value.width >= 320 ? value : undefined),
+  render: (host) => {
+    const input = document.createElement('input');
+    input.value = String(host.value.width);
+    input.addEventListener('change', () => {
+      void host.setValue({ ...host.value, width: Number(input.value) })
+        .catch(() => { host.setError('At least 320 wide.'); });
+    });
+    host.onChange((next) => { input.value = String(next.width); });
+    return input;
+  },
+}),
+```
+
+`host.setValue` rejects when `coerce` refuses, which is how a validation message reaches the user;
+`host.setError` puts it under the control. The value must be plain JSON.
+
 ## Reading and writing
 
 ```ts
@@ -67,7 +237,12 @@ matches falls back to the default:
 | :--- | :--- |
 | Stored value has the wrong type | Default used. |
 | Number outside `min`/`max` | Clamped into range. |
+| Number off a `markers` tick | Snapped to the nearest one. |
+| String longer than `maxLength` | Cut. |
 | `select` value no longer in `options` | Default used. |
+| `multiselect` value no longer offered | Dropped; the rest are kept. |
+| A picker value that is not an id of that kind | Dropped. |
+| An `object` or `list` field that no longer matches | That field falls back to its default; the rest of the object survives. |
 | Key removed from the schema | Ignored. |
 | Key added to the schema | Default used. |
 

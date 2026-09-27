@@ -41,6 +41,7 @@ interface VrcnextPlugin<S> {
 | `osc` | `OscApi` | `osc` |
 | `native` | `NativeApi` | `native` |
 | `gameLog` | `GameLogApi` | `gamelog` |
+| `vrchat` | `VrchatApi` | `vrchat` |
 | `deepLinks` | `DeepLinkApi` | `host:events` with `openDeepLink` in `events` |
 | `router` | `RouterApi` | `routes` |
 | `contextMenu` | `ContextMenuApi` | `context-menu` |
@@ -55,7 +56,7 @@ has not confirmed prompts first. See [Permissions](permissions.md).
 
 ```ts
 type Permission = 'host:events' | 'host:actions' | 'host:intercept' | 'network' | 'notifications'
-  | 'native' | 'osc' | 'gamelog' | 'context-menu' | 'routes' | 'clipboard';
+  | 'native' | 'osc' | 'gamelog' | 'vrchat' | 'context-menu' | 'routes' | 'clipboard';
 type PermissionTone = 'low' | 'medium' | 'high';
 interface PermissionInfo { readonly description: string; readonly tone: PermissionTone }
 
@@ -153,9 +154,41 @@ plugins.
 
 ## Settings
 
-`SettingsSchema` · `SettingsValues<S>` · `SettingsStore<S>` · `SettingSpec`
-`BooleanSetting` · `NumberSetting` · `StringSetting` · `ColorSetting` · `SelectSetting<V>` ·
-`SelectOption<V>` · `defaultsFor()` · `coerceSetting()`
+`SettingsSchema` · `SettingsValues<S>` · `SettingsStore<S>` · `SettingSpec` · `SettingBase` ·
+`InferSetting<S>` · `SettingPredicate` · `SelectOption<V>` · `defaultsFor()` · `defaultOf()` ·
+`coerceSetting()` · `settingFlag()` · `defineCustomSetting()`
+
+See [Settings](settings.md) for the prose. Fifteen kinds:
+
+```ts
+type SettingSpec =
+  | BooleanSetting | NumberSetting | StringSetting | ColorSetting | TimeSetting
+  | SelectSetting<V> | MultiSelectSetting<V>
+  | UserSetting | WorldSetting | AvatarSetting | GroupSetting | InstanceSetting   // EntitySetting
+  | EmbedSetting | ObjectSetting<F> | ListSetting<I> | CustomSetting<T>;
+
+interface SettingBase {
+  readonly label: string;
+  readonly description?: string;
+  readonly hidden?: SettingPredicate;     // boolean, or (values) => boolean
+  readonly disabled?: SettingPredicate;
+}
+```
+
+| Spec | Extra fields | Value |
+| :--- | :--- | :--- |
+| `BooleanSetting` | — | `boolean` |
+| `NumberSetting` | `min` `max` `step` `slider` `markers` `stickToMarkers` `unit` | `number` |
+| `StringSetting` | `placeholder` `multiline` `maxLength` `format: 'text' \| 'password' \| 'url'` | `string` |
+| `ColorSetting` | — | `'#rrggbb'` |
+| `TimeSetting` | — | `'HH:MM'` |
+| `SelectSetting<V>` | `options` | `V` |
+| `MultiSelectSetting<V>` | `options` `min` `max` | `readonly V[]` |
+| `EntitySetting` | `multiple` `scopes` `placeholder` | an id, or `readonly string[]` |
+| `EmbedSetting` | `variables` | `EmbedTemplate` |
+| `ObjectSetting<F>` | `fields` `collapsed` | `SettingsValues<F>` |
+| `ListSetting<I>` | `item` `titleKey` `addLabel` `max` | `readonly SettingsValues<I>[]` |
+| `CustomSetting<T>` | `coerce` `render` | `T` |
 
 ```ts
 interface SettingsStore<S> {
@@ -165,7 +198,102 @@ interface SettingsStore<S> {
   reset(): Promise<void>;
   onChange(listener: (values: SettingsValues<S>) => void): () => void;
 }
+
+interface CustomSettingHost<T> {
+  readonly value: T;
+  setValue(next: T): Promise<void>;          // rejects when `coerce` refuses
+  setError(message: string | undefined): void;
+  onChange(listener: (value: T) => void): () => void;
+}
 ```
+
+`ENTITY_SCOPES` lists every scope per kind; `entityScopes(spec)` resolves a spec's to picker order,
+and `isEntityId(kind, id)` checks one id.
+
+### Discord embeds
+
+`EmbedTemplate` · `EmbedField` · `EMBED_COLORS` · `EMBED_LIMITS` · `EMPTY_EMBED` ·
+`completeEmbed()` · `coerceEmbed()`
+
+```ts
+function renderEmbed(template: EmbedTemplate, values: TemplateValues,
+  options?: { at?: Date; onError?: (error: Error) => void }): DiscordEmbed | undefined;
+function webhookPayload(embed: DiscordEmbed,
+  options?: { username?: string; content?: string }): DiscordWebhookPayload;
+function parseEmbedColor(text: string): number | undefined;
+```
+
+Every text of the template is rendered with the template engine, empty parts are dropped, URLs
+that are not `http(s)` are refused, everything is cut to Discord's limits, and `undefined` comes
+back when nothing is left. `webhookPayload` always sets `allowed_mentions: { parse: [] }`.
+
+## VRChat data
+
+`ctx.vrchat`, permission `vrchat`. See [VRChat data](vrchat-data.md).
+
+`VrchatApi` · `VrcUserSummary` · `VrcUser` · `VrcAvatarSummary` · `VrcAvatar` ·
+`VrcWorldSummary` · `VrcWorld` · `VrcGroupSummary` · `VrcGroup` · `VrcInstance` ·
+`VrcInstanceUser` · `VrcFriendInstance` · `VrcTimelineEvent` · `VrcSearchPage<T>` ·
+`VrcLookupOptions` · `VrcSearchOptions` · `PerformanceRank` · `PERFORMANCE_RANKS` · `rankIndex()`
+
+```ts
+interface VrchatApi {
+  self(): VrcUserSummary | undefined;                                   // synchronous
+
+  friends(o?: VrcLookupOptions): Promise<readonly VrcUserSummary[]>;
+  favoriteFriends(o?): Promise<readonly VrcUserSummary[]>;
+  recentPlayers(o?): Promise<readonly VrcUserSummary[]>;
+  favoriteWorlds(o?): Promise<readonly VrcWorldSummary[]>;
+  recentWorlds(o?): Promise<readonly VrcWorldSummary[]>;
+  ownAvatars(o?): Promise<readonly VrcAvatarSummary[]>;
+  favoriteAvatars(o?): Promise<readonly VrcAvatarSummary[]>;
+  recentAvatars(o?): Promise<readonly VrcAvatarSummary[]>;
+  myGroups(o?): Promise<readonly VrcGroupSummary[]>;
+  currentInstance(o?): Promise<VrcInstance | undefined>;
+  friendInstances(o?): Promise<readonly VrcFriendInstance[]>;
+
+  user(id: string, o?): Promise<VrcUser | undefined>;
+  userBasic(id: string, o?): Promise<VrcUserSummary | undefined>;
+  userGroups(id: string, o?): Promise<readonly VrcGroupSummary[]>;
+  userTimeline(id: string, o?): Promise<readonly VrcTimelineEvent[]>;
+  instanceAvatar(userId: string, o?): Promise<{ avatarId: string; avatarName: string } | undefined>;
+  avatar(id: string, o?): Promise<VrcAvatar | undefined>;
+  world(id: string, o?): Promise<VrcWorld | undefined>;
+  group(id: string, o?): Promise<VrcGroup | undefined>;
+
+  searchUsers(query: string, o?: VrcSearchOptions): Promise<VrcSearchPage<VrcUserSummary>>;
+  searchWorlds(query: string, o?: VrcSearchOptions & { sort?: string }): Promise<VrcSearchPage<VrcWorldSummary>>;
+  searchGroups(query: string, o?): Promise<VrcSearchPage<VrcGroupSummary>>;
+  searchAvatars(query: string, o?): Promise<VrcSearchPage<VrcAvatarSummary>>;
+}
+
+interface VrcLookupOptions { readonly cached?: boolean; readonly signal?: AbortSignal }
+interface VrcSearchOptions { readonly offset?: number; readonly signal?: AbortSignal }
+```
+
+A lookup with no answer resolves `undefined`; unknown strings are `''` and unknown tri-states
+`undefined`. `PERFORMANCE_RANKS` = `'Excellent' | 'Good' | 'Medium' | 'Poor' | 'VeryPoor'`, and
+`rankIndex` turns one into 0–4 (`undefined` for `''`).
+
+## Locations
+
+```ts
+function parseLocation(location: string): ParsedLocation;
+function isGroupInstance(type: string): boolean;
+
+interface ParsedLocation {
+  readonly worldId: string;      // '' when the location is not an instance
+  readonly instanceId: string;
+  readonly key: string;          // 'wrld_…:12345' — identifies the instance across visits
+  readonly instanceType: InstanceType | '';
+  readonly groupId: string;      // group instances
+  readonly ownerId: string;      // friends / friends+ / hidden / private instances
+  readonly region: string;
+}
+```
+
+`INSTANCE_TYPES` = `'public' | 'friends+' | 'friends' | 'hidden' | 'private' | 'invite_plus' |
+'group-public' | 'group-plus' | 'group-members'`, spelled as VRCNext spells them.
 
 ## Events
 
@@ -219,6 +347,7 @@ interface UiApi {
   addSidebarGroup(options: SidebarGroupOptions): PanelHandle;
   injectCss(css: string): PanelHandle;
   toast(options: ToastOptions): void;
+  pickEntity(options: EntityPickOptions): Promise<readonly string[] | undefined>;   // the settings picker, on demand
   readonly kit: UiKit;
   createPanelLayout(): HTMLElement;
   createCard(title: string, icon: IconName): HTMLElement;
@@ -237,7 +366,7 @@ interface SidebarShortcut { id: string; label: string; icon: IconName; activate(
 ```
 
 `NavTabOptions` · `DashboardCardOptions` · `SettingsCardOptions` · `SettingsSectionOptions` ·
-`SidebarGroupOptions` · `PanelHandle` · `IconName` · `ToastOptions`
+`SidebarGroupOptions` · `PanelHandle` · `IconName` · `ToastOptions` · `EntityPickOptions`
 
 ## UI kit
 
@@ -260,7 +389,13 @@ interface UiKit {
   buttonRow(...children: readonly UiChild[]): HTMLElement;
   button(options: { label: string; icon?: IconName; onClick: () => void; active?: boolean; disabled?: boolean; round?: boolean }): HTMLButtonElement;
   textField(options: { value: string; placeholder?: string; onCommit: (next: string) => void }): HTMLInputElement;
+  textArea(options: { value: string; placeholder?: string; rows?: number; onCommit: (next: string) => void }): HTMLTextAreaElement;
   dropdown(options: { options: readonly { value: string; label: string }[]; selected: string; onChange: (next: string) => void }): HTMLSelectElement;
+  slider(options: UiSliderOptions): HTMLElement;          // value readout, optional labelled markers
+  chips(options: UiChipsOptions): HTMLElement;            // toggle buttons; the pressed ones are chosen
+  timeField(options: UiTypedFieldOptions): HTMLInputElement;
+  colorField(options: UiTypedFieldOptions): HTMLInputElement;
+  listItem(options: UiListItemOptions): HTMLElement;      // VRCNext's compact profile row
 
   badge(tone: UiBadgeTone, text: string): HTMLElement;
   stat(options: { label: string; value: string; tone?: UiBadgeTone }): HTMLElement;

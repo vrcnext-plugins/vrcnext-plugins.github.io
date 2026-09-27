@@ -86,4 +86,4 @@ VRCNext's own handling, which already ran before the page saw the event.
 On Linux, `vrcn://` only works if the desktop entry registers the scheme. The AppImage does;
 `install_vrcnext.sh` does **not** — its `.desktop` lacks `MimeType=` and `%u`.
 
-[← Game log](game-log.md) · [Logging →](logging.md)
+[← VRChat data](vrchat-data.md) · [Logging →](logging.md)

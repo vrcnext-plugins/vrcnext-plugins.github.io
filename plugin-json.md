@@ -65,6 +65,7 @@ and risk tone the consent modal shows:
 | `native` | medium | Call the VRCNext Bridge: VR overlay and desktop notification targets. |
 | `osc` | medium | Send and receive OSC avatar parameters through VRCNext. |
 | `gamelog` | medium | Read the VRChat game log, live and its backlog. |
+| `vrchat` | medium | Read VRChat data through VRCNext: your friends, favourites, groups and instance, and look up users, avatars, worlds and groups without opening their dialogs. |
 | `context-menu` | low | Add entries to right-click menus. |
 | `routes` | low | Serve in-page HTTP routes under /plugins/&lt;id&gt;/. |
 | `clipboard` | medium | Read and write the clipboard. |

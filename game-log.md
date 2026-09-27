@@ -66,4 +66,4 @@ These are exported as `GAME_LOG_TYPES` for autocomplete; they are not the type o
 - `message` and `detail` are parsed from a log file whose format VRChat changes without notice.
   Treat them as human-readable text, not a stable API.
 
-[← OSC](osc.md) · [Routes & deep links →](routes-and-links.md)
+[← OSC](osc.md) · [VRChat data →](vrchat-data.md)
