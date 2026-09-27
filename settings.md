@@ -63,13 +63,18 @@ webhookUrl: {
 ### Numbers
 
 `min`, `max` and `step` bound a text field. `slider: true` makes it a slider; `markers` makes it a
-slider with labelled ticks that stops only on them (pass `stickToMarkers: false` to allow values
-in between). `unit` is shown after the value.
+slider with labelled ticks. **The thumb rests on the markers and nowhere else**, which is what
+Equicord's marker sliders do and almost always what you want; `stickToMarkers: false` allows the
+values in between. `integer: true` keeps the value whole — the field refuses a fraction and a
+stored one is rounded. `unit` is shown after the value.
 
 ```ts
 volume:  { kind: 'number', label: 'Volume', default: 50, markers: [0, 25, 50, 75, 100], unit: '%' },
-timeout: { kind: 'number', label: 'Timeout', default: 30, min: 1, max: 60, slider: true, unit: 's' },
+timeout: { kind: 'number', label: 'Timeout', default: 30, min: 1, max: 60, slider: true, integer: true, unit: 's' },
 ```
+
+Snapping is enforced on the stored value too, not only on the control, so a value written by
+`ctx.settings.set` lands on a marker as well.
 
 ### Strings
 

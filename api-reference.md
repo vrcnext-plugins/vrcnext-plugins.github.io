@@ -122,10 +122,12 @@ function satisfies(version: string, range: string): boolean;   // malformed inpu
 
 ```ts
 function timeAgo(iso: string, now?: number): string;   // "just now", "3 minutes ago", "2 hours ago", "5 days ago"
+function formatDuration(ms: number): string;           // "45 minutes", "3 hours", "5 days", "4 months", "2 years"
 ```
 
 `timeAgo(at, now?)` takes an ISO string, an epoch or a `Date`, and reports one unit: `just now`,
-`3 minutes ago`, `2 hours ago`, `5 days ago`, `3 months ago`, `2 years ago`.
+`3 minutes ago`, `2 hours ago`, `5 days ago`, `3 months ago`, `2 years ago`. `formatDuration(ms)`
+picks the same coarse unit for a length of time rather than a point in one, and is `''` for zero.
 
 ## Templates
 
@@ -181,7 +183,7 @@ interface SettingBase {
 | Spec | Extra fields | Value |
 | :--- | :--- | :--- |
 | `BooleanSetting` | — | `boolean` |
-| `NumberSetting` | `min` `max` `step` `slider` `markers` `stickToMarkers` `unit` | `number` |
+| `NumberSetting` | `min` `max` `step` `slider` `markers` `stickToMarkers` `integer` `unit` | `number` |
 | `StringSetting` | `placeholder` `multiline` `maxLength` `format: 'text' \| 'password' \| 'url'` | `string` |
 | `ColorSetting` | — | `'#rrggbb'` |
 | `TimeSetting` | — | `'HH:MM'` |
@@ -238,6 +240,7 @@ back when nothing is left. `webhookPayload` always sets `allowed_mentions: { par
 `VrcWorldSummary` · `VrcWorld` · `VrcGroupSummary` · `VrcGroup` · `VrcInstance` ·
 `VrcInstanceUser` · `VrcFriendInstance` · `VrcTimelineEvent` · `VrcSearchPage<T>` ·
 `VrcLookupOptions` · `VrcSearchOptions` · `PerformanceRank` · `PERFORMANCE_RANKS` · `rankIndex()`
+· `TrustRank` · `TRUST_RANKS` · `trustRank()`
 
 ```ts
 interface VrchatApi {
@@ -279,6 +282,11 @@ interface VrcSearchOptions { readonly offset?: number; readonly signal?: AbortSi
 A lookup with no answer resolves `undefined`; unknown strings are `''` and unknown tri-states
 `undefined`. `PERFORMANCE_RANKS` = `'Excellent' | 'Good' | 'Medium' | 'Poor' | 'VeryPoor'`, and
 `rankIndex` turns one into 0–4 (`undefined` for `''`).
+
+`trustRank(tags)` reads a trust rank out of a user's tags and returns `{ label, short }` —
+`Trusted User`, `Known User`, `User`, `New User` or `Visitor`. VRChat's tags are offset by one
+from the label it shows, and this applies the same offset VRCNext's own profile badge does, so a
+plugin never disagrees with the page about someone's rank.
 
 ## Locations
 

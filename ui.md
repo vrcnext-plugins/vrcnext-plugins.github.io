@@ -58,10 +58,11 @@ Also re-attached automatically when VRCNext re-renders the dashboard.
 
 ## Settings card
 
-The card appears in the **Plugins** section of VRCNext's own Settings tab, below the host's
-install-and-manage cards, and the plugin's entry there gets a **Settings** button that scrolls to
-it. Every setting in the plugin's schema is rendered as a row
-first; `render` adds anything custom below them.
+The card appears in a Settings section **of its own**, named after the plugin and filed below the
+host's Plugin System and Plugins sections, under a divider. The plugin's row in the Plugins list
+gets a **Settings** button that jumps there. A plugin with several cards gets one section
+carrying all of them. Every setting in the plugin's schema is rendered as a row first; `render`
+adds anything custom below them.
 
 ```ts
 ctx.ui.addSettingsCard({
@@ -89,7 +90,7 @@ ctx.ui.addSettingsDivider();
 const section = ctx.ui.addSettingsSection({ id: 'main', label: 'My Plugin', icon: 'extension' });
 section.attach(k.card({ title: 'Status', icon: 'info', children: [/* rows */] }));
 
-// A settings card can be filed there instead of under the host's Plugins section.
+// A settings card can be filed here instead of in the plugin's automatic section.
 ctx.ui.addSettingsCard({ title: 'My Plugin', icon: 'tune', section });
 ```
 
