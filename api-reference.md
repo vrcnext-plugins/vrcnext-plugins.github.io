@@ -117,6 +117,14 @@ function isRange(text: string): boolean;
 function satisfies(version: string, range: string): boolean;   // malformed input never satisfies
 ```
 
+## Time
+
+```ts
+function timeAgo(iso: string, now?: number): string;   // "just now", "3 minutes ago", "2 hours ago", "5 days ago"
+```
+
+Small pure helpers plugins keep needing live in the api package, not in plugins.
+
 ## Settings
 
 `SettingsSchema` · `SettingsValues<S>` · `SettingsStore<S>` · `SettingSpec`
@@ -179,7 +187,10 @@ interface ClipboardApi {
 interface UiApi {
   addNavTab(options: NavTabOptions): PanelHandle;
   addDashboardCard(options: DashboardCardOptions): PanelHandle;
-  addSettingsCard(options: SettingsCardOptions): PanelHandle;
+  addSettingsCard(options: SettingsCardOptions): PanelHandle;   // options.section files it under your own section
+  addSettingsSection(options: SettingsSectionOptions): SettingsSectionHandle;
+  addSettingsDivider(): PanelHandle;
+  addSidebarGroup(options: SidebarGroupOptions): PanelHandle;
   injectCss(css: string): PanelHandle;
   toast(options: ToastOptions): void;
   readonly kit: UiKit;
@@ -189,8 +200,18 @@ interface UiApi {
 }
 ```
 
-`NavTabOptions` · `DashboardCardOptions` · `SettingsCardOptions` · `PanelHandle` · `IconName` ·
-`ToastOptions`
+```ts
+interface SettingsSectionHandle extends PanelHandle {
+  readonly sectionId: string;          // the data-section VRCNext switches on: "<plugin id>.<id>"
+  readonly active: boolean;
+  attach(block: HTMLElement): void;    // a card or container; removed with the section
+  open(block?: HTMLElement): void;     // Settings tab → this section, scrolled to block
+}
+interface SidebarShortcut { id: string; label: string; icon: IconName; activate(): void }
+```
+
+`NavTabOptions` · `DashboardCardOptions` · `SettingsCardOptions` · `SettingsSectionOptions` ·
+`SidebarGroupOptions` · `PanelHandle` · `IconName` · `ToastOptions`
 
 ## UI kit
 

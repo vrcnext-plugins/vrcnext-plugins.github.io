@@ -19,8 +19,11 @@ live log) and **Plugins** (install by URL, enable, update, uninstall, saved perm
 every plugin's settings card). The **Plugins** group the host adds to the sidebar, mirrored as a
 **Plugins** menu in the top bar, only holds shortcuts to those two sections.
 
-Your plugin's own `addNavTab` entries are separate top-level sidebar buttons — they are not
-placed inside that group. The sidebar is for pages that are really pages.
+Everything the host uses to put itself in the app is a plugin API too: sections and dividers in
+Settings, shortcut groups in the sidebar, tabs, dashboard cards. Your plugin's own `addNavTab`
+entries are separate top-level sidebar buttons — they are not placed inside the host's group.
+The sidebar is for pages that are really pages; shortcuts to things that live elsewhere go in a
+group of your own (below).
 
 ## Sidebar tab
 
@@ -73,6 +76,42 @@ ctx.ui.addSettingsCard({
   },
 });
 ```
+
+## Settings section
+
+A section of your own in VRCNext's Settings tab, after the host's. `attach` files any card or
+container under it; `open` jumps there. Ids are namespaced by plugin id, so `main` becomes
+`my-plugin.main` in the page. Disposing the section — or disabling the plugin — removes the nav
+item and every attached block, and VRCNext falls back to General if it was on screen.
+
+```ts
+ctx.ui.addSettingsDivider();
+const section = ctx.ui.addSettingsSection({ id: 'main', label: 'My Plugin', icon: 'extension' });
+section.attach(k.card({ title: 'Status', icon: 'info', children: [/* rows */] }));
+
+// A settings card can be filed there instead of under the host's Plugins section.
+ctx.ui.addSettingsCard({ title: 'My Plugin', icon: 'tune', section });
+```
+
+## Sidebar group
+
+A collapsible group in the sidebar, mirrored as a menu in the top bar, whose entries are
+shortcuts. This is exactly what the host's **Plugins** group is. Use it to reach a Settings
+section, a modal, a tab; use `addNavTab` for a page of its own.
+
+```ts
+ctx.ui.addSidebarGroup({
+  id: 'shortcuts',
+  label: 'My Plugin',
+  icon: 'extension',
+  entries: [
+    { id: 'settings', label: 'Settings', icon: 'tune', activate: () => { section.open(); } },
+    { id: 'hello', label: 'Say hi', icon: 'waving_hand', activate: () => { ctx.ui.toast({ message: 'Hi.' }); } },
+  ],
+});
+```
+
+Survives VRCNext rebuilding its sidebar, and is removed with the plugin.
 
 ## Toasts
 
