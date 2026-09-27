@@ -293,6 +293,7 @@ plugin never disagrees with the page about someone's rank.
 ```ts
 function parseLocation(location: string): ParsedLocation;
 function isGroupInstance(type: string): boolean;
+function instanceTypeLabel(type: string): string;
 
 interface ParsedLocation {
   readonly worldId: string;      // '' when the location is not an instance
@@ -307,6 +308,10 @@ interface ParsedLocation {
 
 `INSTANCE_TYPES` = `'public' | 'friends+' | 'friends' | 'hidden' | 'private' | 'invite_plus' |
 'group-public' | 'group-plus' | 'group-members'`, spelled as VRCNext spells them.
+
+`instanceTypeLabel` gives the name the app puts on screen — "Public", "Friends+", "Group
+Members" — from the same map its instance badges use, so an option list reads the way the rest
+of VRCNext does. `INSTANCE_TYPE_LABELS` is that map. Use it rather than showing a raw type.
 
 ## Events
 
