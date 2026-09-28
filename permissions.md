@@ -55,6 +55,7 @@ plugin can reach. The wording below is the user-facing contract, taken from the 
 | `host:intercept` | once per plugin | *… wants to observe and drop actions VRCNext sends to its backend* |
 | `native` | per `service/method` | *… wants to call the bridge: {service}/{method}*. Details: the parameters. |
 | `osc` | once per plugin | *… wants to send and receive OSC through VRCNext* |
+| `vrchat` | once per plugin | *… wants to read VRChat data through VRCNext*. Until the answer is in, the synchronous `ctx.vrchat.self()` returns `undefined`; the async methods wait. |
 | `gamelog` | once per plugin | *… wants to read the VRChat game log* |
 | `clipboard` | read and write separately | *… wants to read the clipboard* / *… wants to write to the clipboard* |
 | `notifications`, `context-menu`, `routes` | never | the declared category suffices |
