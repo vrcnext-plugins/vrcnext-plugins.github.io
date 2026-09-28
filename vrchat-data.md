@@ -147,8 +147,9 @@ When what you want is for the *user* to choose something, do not build a list â€
 const ids = await ctx.ui.pickEntity({ kind: 'user', scopes: ['friends', 'favorites'] });
 ```
 
-That needs no permission: the picker reads the data on the user's behalf and hands you only what
-they chose.
+A picker declared in your settings needs no permission, because the user fills the form.
+`ctx.ui.pickEntity` needs `vrchat` and asks once, because what it returns goes to your plugin.
+Either way you get only what the user chose.
 
 ## What this does not give you
 
