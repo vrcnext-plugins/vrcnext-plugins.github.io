@@ -188,6 +188,43 @@ Both nest freely — a list item may hold a list, a picker or an embed. Every co
 the same control as at the top level, and an edit anywhere still results in exactly one write of
 the top-level value, so `onChange` fires once.
 
+An `object` may carry a `toggle`: a switch on its header, with its fields shown only while the
+switch is on.
+
+```ts
+templates: {
+  kind: 'object',
+  label: 'Templates',
+  toggle: {
+    label: 'Use custom templates',
+    description: "Off means the plugin's own wording, which changes as the plugin improves.",
+    default: false,
+  },
+  fields: {
+    template: { kind: 'string', multiline: true, label: 'Report', default: DEFAULT_TEMPLATE },
+  },
+},
+// values.templates: { enabled: boolean; template: string }
+```
+
+The switch's own state lives in the object under `enabled` — `TOGGLE_KEY` — beside the fields it
+guards, so you read the answer and the text it gates in one place instead of keeping a loose
+boolean next to them and hoping the two stay in step.
+
+Its fields are **hidden, not cleared**: the values are the user's. Someone who turns a custom
+template off and on again gets back the text they wrote, not an empty box. Read it as a fallback
+rather than a branch at every use:
+
+```ts
+const text = preset.templates.enabled ? preset.templates.template : DEFAULT_TEMPLATE;
+```
+
+Note what that buys the user beyond tidiness: with the switch off they follow the plugin's own
+wording, so every improvement you ship reaches them without them editing anything.
+
+A single setting can be hidden the same way with a `hidden` predicate, which is the better fit
+when the thing being gated is one field rather than a group.
+
 ### Your own control
 
 When no kind fits, `custom` hands you the row. `coerce` decides what may be stored, exactly as the

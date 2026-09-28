@@ -174,8 +174,8 @@ plugins.
 ## Settings
 
 `SettingsSchema` · `SettingsValues<S>` · `SettingsStore<S>` · `SettingSpec` · `SettingBase` ·
-`InferSetting<S>` · `SettingPredicate` · `SelectOption<V>` · `defaultsFor()` · `defaultOf()` ·
-`coerceSetting()` · `settingFlag()` · `defineCustomSetting()`
+`InferSetting<S>` · `SettingPredicate` · `SelectOption<V>` · `ObjectToggle` · `TOGGLE_KEY` ·
+`defaultsFor()` · `defaultOf()` · `coerceSetting()` · `settingFlag()` · `defineCustomSetting()`
 
 See [Settings](settings.md) for the prose. Fifteen kinds:
 
@@ -205,7 +205,7 @@ interface SettingBase {
 | `MultiSelectSetting<V>` | `options` `min` `max` | `readonly V[]` |
 | `EntitySetting` | `multiple` `scopes` `placeholder` | an id, or `readonly string[]` |
 | `EmbedSetting` | `variables` | `EmbedTemplate` |
-| `ObjectSetting<F>` | `fields` `collapsed` | `SettingsValues<F>` |
+| `ObjectSetting<F>` | `fields` `collapsed` `toggle` (a switch on the header; state under `TOGGLE_KEY`, fields hidden while off) | `SettingsValues<F>` |
 | `ListSetting<I>` | `item` `titleKey` `addLabel` `max` | `readonly SettingsValues<I>[]` |
 | `CustomSetting<T>` | `coerce` `render` | `T` |
 
@@ -405,10 +405,17 @@ Through the bridge, a request has these limits:
 | Methods | `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE` |
 | Request body | a string, at most 1 MiB |
 | Response body | UTF-8 text, at most 16 MiB after decompression |
-| Headers | at most 32. `host`, `content-length`, `connection`, `keep-alive`, `proxy-connection`, `proxy-authorization`, `te`, `trailer`, `transfer-encoding`, `upgrade` and `user-agent` are refused |
+| Headers | at most 32. `host`, `content-length`, `connection`, `keep-alive`, `proxy-connection`, `te`, `trailer`, `transfer-encoding`, `upgrade` and `user-agent` are refused as the connection's own |
+| Credentials | **never leave this machine.** `Authorization`, `Proxy-Authorization`, `Cookie` and `Set-Cookie` are refused, a URL carrying `user:password@` is refused, and no request sends cookies — there is no cookie jar, and the page fallback is asked for `credentials: 'omit'`. Authenticate the way the API says to: a query parameter, or its own header such as `X-Api-Key` |
 | Timeout | 30 s by default, 120 s at most |
 | Redirects | never followed. A `3xx` comes back as it was sent, `Location` and all; follow it with another `ctx.http.fetch`, which asks about the new host |
 | Addresses | public internet only. Loopback, private ranges, link-local (including `169.254.169.254`), CGNAT, multicast and the rest are refused, whether written in the URL or reached by resolving a name |
+
+This machine holds two credentials a third party must never see — the bridge's pairing token,
+which grants everything the bridge can do, and the page's VRChat session — so the rule is enforced
+in three places rather than trusted: the host refuses the request before it is even put to the
+user, the bridge refuses the header, and the finished request is checked once more on its way out.
+`CREDENTIAL_HEADERS` and `isCredentialHeader(name)` are exported if you want to check first.
 
 Aborting, through `init.signal` or by the plugin being disabled, rejects the promise with an
 `AbortError` straight away. The bridge may still finish the request, but its answer is dropped.
