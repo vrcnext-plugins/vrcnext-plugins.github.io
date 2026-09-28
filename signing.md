@@ -40,12 +40,14 @@ Once, on a machine you control, in the plugin repository:
 node scripts/sign-plugin.mjs keygen
 ```
 
-That writes the private key to `vrcnext-signing-key.txt` (mode `0600`) and prints the public key
+That writes the private key to `vrcnext-signing-key.txt` (mode `0600`; `--out FILE` picks another
+path) and prints the public key
 and its fingerprint. There is no recovery: lose the file and your users confirm a key change on
 their next update.
 
 Keep the private key out of the repository. Publish the **fingerprint** in your README, so users
-have something to compare against:
+have something to compare against. `node scripts/sign-plugin.mjs fingerprint [--key FILE]` prints
+it again at any time:
 
 ```
 Signed by  4c82-4d21-20fc-0d00-1154-ef7a-156c-faea
@@ -68,7 +70,7 @@ bytes anyone else receives.
 
 Put the 64 hex characters from `keygen` in a repository secret named `VRCNEXT_SIGNING_KEY`
 (Settings → Secrets and variables → Actions), and copy `scripts/plugin-sign-workflow.yml` from
-the plugin system into `.github/workflows/sign.yml`. Every push to the default branch signs the
+the plugin system into `.github/workflows/sign.yml`. Every push to `main` signs the
 tree and commits `plugin.sig` back.
 
 The secret never leaves the runner; only the signature is pushed. The tradeoff is a short window
