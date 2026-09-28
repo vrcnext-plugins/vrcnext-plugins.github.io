@@ -118,7 +118,9 @@ answer within two minutes is a refusal. See [VRCNext Bridge](native-companion.md
 - To *read* VRChat data, declare `vrchat` (medium) rather than `host:actions` (high). Sending
   `vrcGet…` actions yourself both asks for more authority than you need and paints VRCNext's
   modals; [`ctx.vrchat`](vrchat-data.md) reads the same data quietly.
-- Pickers and `ctx.ui.pickEntity` need no permission at all: the user chooses, and the plugin only
-  learns what they chose. Prefer them over reading a whole friend list to build your own list.
+- Picker rows in your settings schema need no permission: the user fills the form. Opening a
+  picker yourself with `ctx.ui.pickEntity` needs `vrchat` and asks once, like any lookup,
+  because what it returns goes to the plugin. Either is still better than reading a whole friend
+  list to build your own.
 
 [← plugin.json](plugin-json.md) · [Source policy →](source-policy.md)

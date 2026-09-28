@@ -100,6 +100,7 @@ item and every attached block, and VRCNext falls back to General if it was on sc
 ```ts
 ctx.ui.addSettingsDivider();
 const section = ctx.ui.addSettingsSection({ id: 'main', label: 'My Plugin', icon: 'extension' });
+// id: lowercase letters, digits, '.', '_' and '-' only; anything else throws.
 section.attach(k.card({ title: 'Status', icon: 'info', children: [/* rows */] }));
 
 // A settings card can be filed here instead of in the plugin's automatic section.
@@ -133,7 +134,8 @@ Survives VRCNext rebuilding its sidebar, and is removed with the plugin.
 ## Choosing a VRChat thing
 
 A [picker setting](settings.md#pickers) covers the usual case. When the choice belongs to a button
-rather than a settings row, open the same picker directly:
+rather than a settings row, open the same picker directly. This needs the `vrchat` permission and
+asks the user once, like any [VRChat lookup](vrchat-data.md):
 
 ```ts
 const ids = await ctx.ui.pickEntity({

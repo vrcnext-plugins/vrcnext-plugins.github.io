@@ -48,6 +48,9 @@ are delegated untouched to the original `fetch`.
 
 ## Deep links
 
+Both need `"openDeepLink"` (or `"*"`) in `plugin.json`'s `events`; without it they throw
+`PermissionError`, like an undeclared event.
+
 ```ts
 ctx.deepLinks.onPrefix('wrld', (event) => {
   ctx.logger.info(`World link: ${event.id}`);
