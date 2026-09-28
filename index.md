@@ -130,7 +130,8 @@ Everything else on this site is implemented and type-checked against VRCNext **2
 
 | Repository | Purpose |
 | :--- | :--- |
-| [vrcnext-plugin-system](https://github.com/vrcnext-plugins/vrcnext-plugin-system) | The host, the typed `@vrcnext/plugin-api` contract, the plugin template and the installer. |
+| [vrcnext-plugin-system](https://github.com/vrcnext-plugins/vrcnext-plugin-system) | The host, the typed `@vrcnext/plugin-api` contract and the installer. |
+| [vrcnext-example-plugin](https://github.com/vrcnext-plugins/vrcnext-example-plugin) | The template repository: a working plugin using every capability, one per file. |
 | [vrcnext-bridge](https://github.com/vrcnext-plugins/vrcnext-bridge) | The native companion daemon. Rust, loopback only, one WebSocket. |
 | [vrcnext-plugins.github.io](https://github.com/vrcnext-plugins/vrcnext-plugins.github.io) | This site. |
 

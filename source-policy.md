@@ -95,7 +95,7 @@ Plain DOM work is allowed. `document.createElement`, `addEventListener`, `textCo
 
 ## Finding problems before the bridge does
 
-The template's `eslint.config.mjs` reports most of these as lint errors, so `npm run check` in
+The [template](https://github.com/vrcnext-plugins/vrcnext-example-plugin)'s `eslint.config.mjs` reports most of these as lint errors, so `npm run check` in
 your repository catches them locally. The bridge's message names the file, line and rule, so the
 rest are one-line fixes.
 

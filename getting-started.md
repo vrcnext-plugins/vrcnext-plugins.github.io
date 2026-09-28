@@ -51,16 +51,23 @@ again. To see the token later: `vrcnext-bridge --print-token`.
 
 ## 3. Start a plugin from the template
 
-Copy [`examples/template`](https://github.com/vrcnext-plugins/vrcnext-plugin-system/tree/main/examples/template)
-into a new git repository. It is the recommended starting point: a strict `tsconfig.json`, an
-ESLint config mirroring the host's rules, a `plugin.json` skeleton and a `main.ts` skeleton.
+Press **Use this template** on
+[vrcnext-example-plugin](https://github.com/vrcnext-plugins/vrcnext-example-plugin), or clone
+it. It is a plugin that already works — every capability the host provides, one capability per
+file — with a strict `tsconfig.json`, an ESLint config mirroring the host's rules, and the
+signing tool you will need to publish it.
 
 ```
 plugin.json        the manifest
+plugin.sig         the signature over everything else
 main.ts            default-exports definePlugin({...})
-src/**             optional, imported from main.ts
+src/sections/**    one capability each; delete the ones you do not need
 README.md          optional
 ```
+
+Starting from it means **deleting**, not assembling: remove a section's line from `main.ts`, its
+file, and whatever it needed from `permissions`, `events` and `hosts`. Declaring less is the
+point — every category is shown to the user with a risk tone when they enable your plugin.
 
 Rename the `id` in both `plugin.json` and `main.ts` — they must agree. Then:
 
