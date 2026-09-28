@@ -121,13 +121,23 @@ function satisfies(version: string, range: string): boolean;   // malformed inpu
 ## Time
 
 ```ts
+type TimeInput = string | number | Date;
+interface Timestamped { readonly timestamp: TimeInput }
+
 function timeAgo(iso: string, now?: number): string;   // "just now", "3 minutes ago", "2 hours ago", "5 days ago"
 function formatDuration(ms: number): string;           // "45 minutes", "3 hours", "5 days", "4 months", "2 years"
+function newestFirst<T extends Timestamped>(items: readonly T[] | undefined): readonly T[];
 ```
 
 `timeAgo(at, now?)` takes an ISO string, an epoch or a `Date`, and reports one unit: `just now`,
 `3 minutes ago`, `2 hours ago`, `5 days ago`, `3 months ago`, `2 years ago`. `formatDuration(ms)`
 picks the same coarse unit for a length of time rather than a point in one, and is `''` for zero.
+
+`newestFirst(items)` orders anything carrying a `timestamp` — a `VrcTimelineEvent`, your own
+records — newest first, and takes `undefined` for "nothing yet". An item whose timestamp cannot
+be parsed is **left out** rather than sorted to 1970, since it cannot be placed in the order at
+all. Use it instead of sorting a timeline yourself: `ctx.vrchat.userTimeline` arrives in no
+guaranteed order.
 
 ## Templates
 
@@ -232,6 +242,24 @@ Every text of the template is rendered with the template engine, empty parts are
 that are not `http(s)` are refused, everything is cut to Discord's limits, and `undefined` comes
 back when nothing is left. `webhookPayload` always sets `allowed_mentions: { parse: [] }`.
 
+### Discord text
+
+```ts
+type DiscordTimeStyle = 't' | 'T' | 'd' | 'D' | 'f' | 'F' | 'R';
+
+function discordCode(name: string): string;                                   // `Club Neon`
+function discordTimestamp(at: TimeInput, style?: DiscordTimeStyle): string;    // <t:1790510400:R>
+```
+
+Discord applies its markdown to anything you interpolate, so a world called `**Club**` styles the
+line it lands in. `discordCode` fences a name as a code span — and outgrows the backticks the name
+itself contains, which is the only escape Discord honours.
+
+`discordTimestamp` writes the `<t:…>` markup Discord renders in each reader's own timezone and
+language. The default `R` style keeps saying "3 hours ago" correctly however long the message
+sits in the channel, which a formatted clock time cannot; it is `''` for an instant it cannot
+read, so the line drops instead of printing `NaN`.
+
 ## VRChat data
 
 `ctx.vrchat`, permission `vrchat`. See [VRChat data](vrchat-data.md).
@@ -240,7 +268,7 @@ back when nothing is left. `webhookPayload` always sets `allowed_mentions: { par
 `VrcWorldSummary` · `VrcWorld` · `VrcGroupSummary` · `VrcGroup` · `VrcInstance` ·
 `VrcInstanceUser` · `VrcFriendInstance` · `VrcTimelineEvent` · `VrcSearchPage<T>` ·
 `VrcLookupOptions` · `VrcSearchOptions` · `PerformanceRank` · `PERFORMANCE_RANKS` · `rankIndex()`
-· `TrustRank` · `TRUST_RANKS` · `trustRank()`
+· `rankLabel()` · `rankEmoji()` · `RANK_EMOJI` · `TrustRank` · `TRUST_RANKS` · `trustRank()`
 
 ```ts
 interface VrchatApi {
@@ -282,6 +310,10 @@ interface VrcSearchOptions { readonly offset?: number; readonly signal?: AbortSi
 A lookup with no answer resolves `undefined`; unknown strings are `''` and unknown tri-states
 `undefined`. `PERFORMANCE_RANKS` = `'Excellent' | 'Good' | 'Medium' | 'Poor' | 'VeryPoor'`, and
 `rankIndex` turns one into 0–4 (`undefined` for `''`).
+
+Show a rank with `rankLabel(rank)` — `Very Poor`, not `VeryPoor`, and `Unknown` for `''` — and
+`rankEmoji(rank)` for VRChat's traffic-light colour (🟢🔵🟡🟠🔴, ⚪ unknown); `RANK_EMOJI` is that
+map. Never print a raw rank: the worst one is spelled as one word and reads as a typo.
 
 `trustRank(tags)` reads a trust rank out of a user's tags and returns `{ label, short }` —
 `Trusted User`, `Known User`, `User`, `New User` or `Visitor`. VRChat's tags are offset by one
@@ -374,6 +406,17 @@ interface UiApi {
 ```
 
 ```ts
+interface PanelHandle extends Disposable {
+  readonly element: HTMLElement;
+  readonly visible: boolean;           // is the user looking at this panel?
+}
+interface NavTabOptions {
+  readonly label: string;
+  readonly icon: IconName;
+  render(container: HTMLElement): void | Promise<void>;   // once, lazily, on first open
+  readonly group?: string;
+  onVisibility?(visible: boolean): void;                  // every switch, including to VRCNext's own tabs
+}
 interface SettingsSectionHandle extends PanelHandle {
   readonly sectionId: string;          // the data-section VRCNext switches on: "<plugin id>.<id>"
   readonly active: boolean;

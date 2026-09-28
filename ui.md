@@ -28,16 +28,24 @@ group of your own (below).
 ## Sidebar tab
 
 ```ts
-ctx.ui.addNavTab({
+const panel = ctx.ui.addNavTab({
   label: 'My Plugin',
   icon: 'extension',          // Material Symbols Rounded ligature
   render: (tab) => {
     tab.appendChild(ctx.ui.createCard('Status', 'monitoring'));
   },
+  onVisibility: (visible) => { if (visible) startPolling(); else stopPolling(); },
 });
+
+panel.visible;                // the same state, to read on demand
 ```
 
 `render` is called **once, lazily**, the first time the tab is opened.
+
+VRCNext shows one tab at a time, and `onVisibility` fires whenever yours becomes the one on
+screen or stops being it — including when the user switches to one of VRCNext's own tabs, which
+your plugin never hears about otherwise. Use it to **stop work nobody can see**: a poll, a clock,
+a redraw. `panel.visible` is `false` until the tab is first opened.
 
 VRCNext's `navRender()` does `navEl.innerHTML = ''` whenever the nav editor saves or the layout
 changes, which drops injected buttons entirely. The host re-attaches via a `MutationObserver` —
@@ -262,8 +270,10 @@ Still available, and used by the kit internally:
 | `ctx.ui.createCard(title, icon)` | A `vrcn-panel-card` with a header. |
 | `ctx.ui.createToggleRow(label, checked, onChange)` | An `sf-toggle-row` with a themed switch. |
 
-Every injector returns a `PanelHandle` with `.element` and `.dispose()`, and is disposed
-automatically with the plugin.
+Every injector returns a `PanelHandle` with `.element`, `.visible` and `.dispose()`, and is
+disposed automatically with the plugin. `visible` asks whether the user can see that panel: for a
+nav tab, whether it is the tab on screen; for a settings card, whether its section is the one
+open; for injected CSS, never.
 
 ## A warning about icons
 
