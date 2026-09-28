@@ -379,7 +379,7 @@ interface RequestOptions { readonly expect: string; readonly timeoutMs?: number;
 
 ```ts
 interface HttpApi {
-  /** The only fetch a plugin has. Always carries the plugin's abort signal. */
+  /** The only fetch a plugin has. Asks about each host once; carries the plugin's abort signal. */
   fetch(url: string | URL, init?: RequestInit): Promise<Response>;
 }
 interface ClipboardApi {
@@ -387,6 +387,31 @@ interface ClipboardApi {
   readText(): Promise<string>;
 }
 ```
+
+### How `ctx.http.fetch` travels
+
+While the [bridge](native-companion.md) is connected, every request goes through its `outbound`
+service rather than the page. The page may only read a cross-origin response the server agreed
+to share, so an API that sends no CORS headers, such as the Steam Web API, is unreachable from
+the page. The bridge is not a browser and reaches it. When the bridge is not connected, the
+request falls back to the page's own `fetch` and CORS applies again.
+
+Through the bridge, a request has these limits:
+
+| Limit | Value |
+| :--- | :--- |
+| Schemes | `http` and `https` |
+| Methods | `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, `DELETE` |
+| Request body | a string, at most 1 MiB |
+| Response body | UTF-8 text, at most 16 MiB after decompression |
+| Headers | at most 32. `host`, `content-length`, `connection`, `keep-alive`, `proxy-connection`, `proxy-authorization`, `te`, `trailer`, `transfer-encoding`, `upgrade` and `user-agent` are refused |
+| Timeout | 30 s by default, 120 s at most |
+| Redirects | never followed. A `3xx` comes back as it was sent, `Location` and all; follow it with another `ctx.http.fetch`, which asks about the new host |
+| Addresses | public internet only. Loopback, private ranges, link-local (including `169.254.169.254`), CGNAT, multicast and the rest are refused, whether written in the URL or reached by resolving a name |
+
+Aborting, through `init.signal` or by the plugin being disabled, rejects the promise with an
+`AbortError` straight away. The bridge may still finish the request, but its answer is dropped.
+`response.url` is the URL that was asked for.
 
 ## UI
 
