@@ -7,18 +7,23 @@ title: Publishing & updates
 [← Back to index](./)
 
 There is no registry and no repository manifest. A plugin is published the moment its repository
-is reachable over `https://` with a valid [`plugin.json`](plugin-json.md) and `main.ts` at the
-root. Users install it by pasting the repository URL into the Plugins tab; the
+is reachable over `https://` with a valid [`plugin.json`](plugin-json.md), `main.ts` and a
+current [`plugin.sig`](signing.md) at the root. Users install it by pasting the repository URL into the Plugins tab; the
 [bridge](native-companion.md) clones the default branch and compiles it.
 
 ## What to push
 
 ```
 plugin.json        the manifest
+plugin.sig         the signature over everything else (see Signing)
 main.ts            default-exports definePlugin({...})
 src/**             optional, imported from main.ts
 README.md          optional
 ```
+
+**A repository without a valid `plugin.sig` cannot be installed or updated.** Sign every release
+and commit the signature; see [Signing plugins](signing.md) for the one-off key and the GitHub
+Actions step.
 
 Nothing is built on your side and there is no `dist/` to commit. The bridge imports `main.ts` as
 TypeScript straight from the clone, so what users run is what is in your default branch. Any
@@ -52,7 +57,11 @@ Consequences:
   user sees in the manager — but forgetting to does not hide a release.
 - **Every push to the default branch is a release.** Users see it as "N commits behind" with
   your commit summaries as the changelog, so write summaries a user can read. Develop on a
-  branch and merge when ready.
+  branch and merge when ready — and re-sign whenever the tracked files change, because an
+  unsigned release is one nobody can install.
+- **Keep signing with the same key.** A different key stops every user's update with a separate
+  confirmation naming both fingerprints, which is exactly what it is for — but it is a bad way
+  to ship a bugfix.
 - **Settings and saved permission grants survive an update.** They live in the bridge's state
   store under the plugin's id, not in the clone.
 - **A new permission or target needs the user's consent again.** New entries in `permissions`

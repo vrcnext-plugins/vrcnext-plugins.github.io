@@ -26,6 +26,7 @@ none of them holds against a malicious plugin the user has already enabled.
 | Control | Detail |
 | :--- | :--- |
 | **Nothing runs that the bridge did not compile** | The page runs one static bundle. It never evaluates code at runtime, never fetches a manifest, never loads a blob. The only way for code to reach the page is a git clone through the bridge. |
+| **Author signatures** | Every tree carries an Ed25519 `plugin.sig` over its files, bound to the plugin id. A plugin is pinned to the key it was installed under; an unknown key, and any later change of key, is confirmed natively and separately. See [Signing](signing.md). |
 | **Native confirmation** | Install, update and uninstall are confirmed outside the page — a desktop notification with Confirm/Deny on Linux, a message box on Windows — because the page cannot be trusted to confirm code being added to itself. No channel, no answer within two minutes: refused. |
 | **Transport** | `https://` only, cloned with pure-Rust git (no shell, no system `git`), depth 1, 120 s deadline. Symlinks in the clone refuse the install. |
 | **Manifest validation** | [`plugin.json`](plugin-json.md) is parsed by the bridge at install and update, and again by the host at boot, through the same parser. Unknown fields and unknown permission names are errors. |
@@ -43,9 +44,13 @@ none of them holds against a malicious plugin the user has already enabled.
 - No sandbox or iframe isolation — plugins share the page's global scope and the host's bundle.
 - No protection *between* plugins. One plugin can reach another's DOM; the state store is
   namespaced per plugin, but the namespace is a convention the host follows, not a wall.
-- No code signing and no review of what a repository serves. A repository can change at any
-  time; what protects you is that nothing changes on your machine until you press **Update**
-  and confirm on the desktop.
+- **No review** of what a repository serves. A signature says who published a tree, not that the
+  tree is safe, and nothing vouches for a fingerprint but the author — accepting one the first
+  time is trust on first use. What protects you beyond that is that nothing changes on your
+  machine until you press **Update** and confirm on the desktop, and that a changed signing key
+  stops the update and asks.
+- Signing does not help if the author's own key is stolen, or if you accept a fingerprint
+  without checking it against what the author publishes.
 - The source policy is a text scan, not a parser. It catches honest mistakes and makes dishonest
   ones obvious in a review; a determined author can find a spelling it does not cover.
 - The permission prompts are rendered by the host, in the page. A plugin that has already
@@ -57,6 +62,8 @@ none of them holds against a malicious plugin the user has already enabled.
 ## Guidance for users
 
 - Only install repositories you would trust with your VRChat account.
+- Check the fingerprint at the "trust a new signing key" prompt against the one the author
+  publishes. If an update says the key changed, stop and ask them before confirming.
 - Read the enable modal. A plugin that asks for `host:actions` or `host:intercept` (both *High
   risk*) can act on your account or drop VRCNext's own traffic; a plugin that draws its own UI
   needs neither.

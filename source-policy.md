@@ -70,6 +70,15 @@ The template's `eslint.config.mjs` reports most of these as lint errors, so `npm
 your repository catches them locally. The bridge's message names the file, line and rule, so the
 rest are one-line fixes.
 
+## What is not scanned
+
+Two narrow exemptions, both for files that exist to configure or release the plugin and never
+reach the bundle: the tooling configs at the repository root (`eslint.config.*`,
+`vitest.config.*`) and `scripts/sign-plugin.mjs`, the [signing tool](signing.md), which runs
+under Node and has to name `process` and `Buffer` to do its job. Both are exempt by exact path,
+and any source file that so much as mentions one of them is refused — importing an exempt file
+would pull it into the bundle unscanned, which is the whole thing the exemption must not allow.
+
 ## Dependencies
 
 The bridge runs no package manager. Anything you import must be committed into the repository,

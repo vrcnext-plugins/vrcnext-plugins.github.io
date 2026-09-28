@@ -101,6 +101,7 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | Page | What it covers |
 | :--- | :--- |
 | [Publishing & updates](publishing.md) | Versioning, how updates reach users, `apiVersion`. |
+| [Signing plugins](signing.md) | The signing key, `plugin.sig`, and what the bridge checks. |
 | [Using TSX](tsx.md) | JSX in plugins: vendor the renderer, and why VRCNext itself has no framework. |
 | [Security model](security.md) | What plugins can do, and what the system does about it. |
 | [Limitations](limitations.md) | What is genuinely impossible without patching VRCNext. |
@@ -138,5 +139,7 @@ Everything else on this site is implemented and type-checked against VRCNext **2
 Plugins run inside the VRCNext page with the full authority of the user's VRChat session. There
 is no sandbox. The [permission model](permissions.md) makes each capability declared and each
 concrete use confirmed, and the [source policy](source-policy.md) keeps plugins on the `ctx.*`
-path — neither contains a plugin that is determined to misbehave. Installing a plugin is still
+path — neither contains a plugin that is determined to misbehave. Every tree must also be
+[signed](signing.md) by its author, and a plugin stays pinned to the key it was installed with,
+so a repository changing hands cannot quietly become an update. Installing a plugin is still
 equivalent to running a program from that repository. See the [security model](security.md).
