@@ -167,7 +167,7 @@ both conditional forms, and filters `upper lower capitalize trim length size def
 replace truncate get` (`size` is `length` under Liquid's name; `get: "key"` reads a field). `elseif`
 is accepted as a spelling of `elif`. A missing name renders empty; a line whose placeholders all rendered empty is
 dropped (`dropEmptyLines`). A broken template throws `TemplateError`: an unknown filter, a tag
-that is never closed (`{{name}` included), or nesting deeper than `MAX_TEMPLATE_DEPTH` (32); `validateTemplate` reports
+that is never closed ({% raw %}`{{name}`{% endraw %} included), or nesting deeper than `MAX_TEMPLATE_DEPTH` (32); `validateTemplate` reports
 it without rendering. Small pure helpers plugins keep needing live in the api package, not in
 plugins.
 
