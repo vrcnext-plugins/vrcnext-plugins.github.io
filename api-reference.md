@@ -152,6 +152,7 @@ class TemplateError extends Error {}
 A small, safe template language for user-editable messages — Jinja-shaped, evaluated by a
 walker over a fixed grammar, so a template can never run code or reach a prototype:
 
+{% raw %}
 ```text
 Player {name} joined                          {name} is short for {{ name }}
 18+: {{ "yes" if ageVerified else "no" }}     Python-style conditional
@@ -159,6 +160,7 @@ Rejoin: {{ rejoin ? "yes" : "no" }}           C-style conditional
 {% if inGroup == false %}NOT A MEMBER{% elif inGroup %}member{% else %}unknown{% endif %}
 {{ pcRank | upper }} · {{ avatar | default: "unknown avatar" }} · {{ tags | join: "+" }}
 ```
+{% endraw %}
 
 Expressions: literals, dotted names, `== != < <= > >=`, `and or not` (or `&& || !`), `+`/`-`,
 both conditional forms, and filters `upper lower capitalize trim length default yesno join
