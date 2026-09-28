@@ -31,7 +31,7 @@ dishonest plugin is obvious in review.
 | `escape sequences` | more than **eight** `\xNN` or `\uNNNN` escapes in a row |
 | `mangled identifiers` | `_0x` followed by four hex digits — the signature `javascript-obfuscator` leaves |
 | `opaque blob` | an unbroken run of **256+** characters from `[A-Za-z0-9+/=_-]` with **≥ 3.5 bits** of Shannon entropy per character |
-| `invisible characters` | zero-width characters and bidirectional overrides (`U+200B–U+200F`, `U+202A–U+202E`, `U+2060–U+2069`, `U+FEFF`), which make the source read differently than it runs — the Trojan Source attack. A byte-order mark at the very start of a file is fine. |
+| `invisible characters` | zero-width characters and bidirectional overrides (`U+200B–U+200F`, `U+202A–U+202E`, `U+2060–U+2064`, `U+2066–U+2069`, `U+FEFF`), which make the source read differently than it runs — the Trojan Source attack. A byte-order mark at the very start of a file is fine. |
 
 Nothing here detects obfuscation in general; that is undecidable, and unreadable code can be
 written in plain ASCII at honest line lengths. What it does is take the cheap, tool-generated
@@ -51,28 +51,35 @@ In the order the bridge reports them:
 
 | Rule | Matches |
 | :--- | :--- |
-| `eval` | `eval(` |
-| `new Function` | `new Function` |
-| `globalThis` | `globalThis.` |
-| `window` | `window.` — no exceptions, not even `window.location.href` |
+| `eval` | the word `eval`, called or not: `(0, eval)(s)` is refused too |
+| `Function` | the word `Function`: `new Function(…)`, or a reference to call later |
+| `globalThis` | the word `globalThis`, so `globalThis['fe' + 'tch']` is refused as well as `globalThis.x` |
+| `window` | the word `window`, with no exceptions, not even `window.location.href` |
+| `self` | `self.` or `self[`; a function named `self()` is fine |
+| `top`, `parent`, `frames` | the name followed by `[` or by a member only the window has (`parent.postMessage`, `top.location`); `parent.appendChild(li)` and `rect.top` are fine |
+| `opener` | the word `opener` |
+| `defaultView` | `defaultView`, even after a dot: `el.ownerDocument.defaultView` is the window |
+| `__receiveMessageCallbacks` | anywhere; it is VRCNext's own message channel |
+| `Reflect.get` | `Reflect.get(` |
 | `document.cookie` | `document.cookie` |
-| `localStorage` | `localStorage` |
-| `sessionStorage` | `sessionStorage` |
-| `indexedDB` | `indexedDB` |
-| `XMLHttpRequest` | `XMLHttpRequest` |
-| `bare fetch` | `fetch(` — `ctx.http.fetch(` and `ctx.router.fetch(` are fine |
-| `WebSocket` | `WebSocket(` |
+| `localStorage`, `sessionStorage`, `indexedDB` | the name, even after a dot, so `self.localStorage` is refused |
+| `XMLHttpRequest`, `fetch`, `WebSocket`, `EventSource` | the word, called or referenced. `ctx.http.fetch(` and `ctx.router.fetch(` are fine, and so is `fetchStars` |
+| `navigator.sendBeacon` | anywhere |
+| `Worker`, `SharedWorker`, `importScripts` | the word |
 | `dynamic import` | `import(` |
 | `script tag` | `<script` anywhere |
 | `innerHTML assignment` | `.innerHTML =` (a comparison or a read is fine) |
 | `insertAdjacentHTML` | `insertAdjacentHTML` anywhere |
 | `setTimeout with a string` | `setTimeout(` whose first argument is a string literal |
-| `require` | `require(` |
+| `require` | the word `require` |
 | `process` | `process.` |
+| `references a tooling config` | a source file, or any `.json` file, that names one of the exempt files below, in any letter case. `package.json`'s `scripts` block is not checked. |
 
-Most rules match the text only when it is *bare*: preceded by something other than an identifier
-character or a dot. So `retrieval(x)` does not trip `eval`, and `prefetch(` does not trip
-`fetch`, but `window.` is refused wherever it appears.
+A **word** match needs something other than an identifier character on both sides, and no dot
+in front. So `retrieval(x)` does not trip `eval`, `prefetch(` does not trip `fetch`, and a
+member access like `ctx.http.fetch` is left alone. Taking a reference is refused like a call:
+`const f = fetch` and `(0, fetch)(url)` both trip `fetch`. The rules marked "even after a dot"
+exist because those names reach the same object through another path.
 
 Also enforced: at most **200 source files** and **2 MiB** of source in total, no symlinks inside
 the clone. `.git/` and non-source files such as `README.md` are not scanned.
@@ -104,9 +111,11 @@ rest are one-line fixes.
 Two narrow exemptions, both for files that exist to configure or release the plugin and never
 reach the bundle: the tooling configs at the repository root (`eslint.config.*`,
 `vitest.config.*`) and `scripts/sign-plugin.mjs`, the [signing tool](signing.md), which runs
-under Node and has to name `process` and `Buffer` to do its job. Both are exempt by exact path,
-and any source file that so much as mentions one of them is refused — importing an exempt file
-would pull it into the bundle unscanned, which is the whole thing the exemption must not allow.
+under Node and has to name `process` and `Buffer` to do its job. Both are exempt by exact path.
+Any source file that mentions one of them is refused, in any letter case, and so is any `.json`
+file that names one, such as an `imports` alias in `package.json` or a `paths` entry in a
+tsconfig. Importing an exempt file would pull it into the bundle unscanned, which is the whole
+thing the exemption must not allow.
 
 ## Dependencies
 
