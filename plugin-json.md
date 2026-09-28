@@ -25,7 +25,7 @@ of problems the UI shows verbatim.
   "optionalPermissions": ["network"],         // asked for later via ctx.permissions.request
   "actions": ["getFriends"],        // VRCNext actions granted at enable (host:actions)
   "events": ["friendOnline"],       // host events granted at enable (host:events)
-  "hosts": ["api.example.com"]      // hosts granted at enable (network); no wildcards
+  "hosts": ["api.example.com"]      // hosts it means to reach (network); each still prompts once
 }
 ```
 
@@ -44,7 +44,7 @@ of problems the UI shows verbatim.
 | `optionalPermissions` | Categories the plugin may ask for later through `ctx.permissions.request(p)`. |
 | `actions` | Exact VRCNext action names `ctx.bridge` may send without a prompt. Needs `host:actions`. |
 | `events` | Exact host event names `ctx.events` may subscribe to without a prompt. Needs `host:events`. `openDeepLink` here covers `ctx.deepLinks`. |
-| `hosts` | Exact hosts `ctx.http.fetch` may reach without a prompt. Bare host names, optionally with a port; no scheme, no path, no wildcards. Needs `network`. |
+| `hosts` | Exact hosts `ctx.http.fetch` means to reach, shown to the user at enable. Each host still prompts before its first request. Bare host names, optionally with a port; no scheme, no path, no wildcards. Needs `network`. |
 | `dependencies` | Optional: ids of plugins that must be enabled before this one activates. The host orders activation by these; a plugin cannot depend on itself. |
 
 Lists are de-duplicated; empty or non-string entries are errors. An unknown permission name is an

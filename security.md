@@ -76,8 +76,9 @@ none of them holds against a malicious plugin the user has already enabled.
 
 ## Guidance for plugin authors
 
-- Declare exactly what you use. Pre-declare the `hosts`, `actions` and `events` you know you need
-  so the user sees one modal at enable instead of a prompt a minute later.
+- Declare exactly what you use. Pre-declare the `actions` and `events` you know you need so the
+  user sees one modal at enable instead of a prompt a minute later. Declare your `hosts` too;
+  each still prompts on first use.
 - Never log tokens, auth headers or message content — `ctx.logger` output is user-visible,
   mirrored to the bridge's `plugins.log`, and gets pasted into bug reports.
 - Never put secrets in settings. The state store is a plain JSON file on the user's disk and

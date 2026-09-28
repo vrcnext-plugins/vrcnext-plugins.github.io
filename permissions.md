@@ -39,9 +39,11 @@ cheap synchronous check for rendering state.
 ## Layer two: first use
 
 Inside a declared category, each *concrete* target is confirmed the first time the plugin
-touches it. Targets pre-declared in `plugin.json` (`hosts`, `actions`, `events`) were granted at
-enable, so they never prompt. For `hosts`, anything else prompts, one modal at a time; identical
-concurrent requests share one prompt. For `actions` and `events` there is no "anything else" —
+touches it. `actions` and `events` declared in `plugin.json` were granted at enable, so they
+never prompt. `hosts` are different: every host prompts before its first request, declared or
+not, because a request through the bridge reaches places a browser would refuse. A declared host
+tells the user where the plugin means to go; the answer is still theirs. Prompts come one modal at
+a time, and identical concurrent requests share one. For `actions` and `events` there is no "anything else" —
 a name outside the list is refused, so what the enable dialog lists is the whole of what the
 plugin can reach. The wording below is the user-facing contract, taken from the host.
 
@@ -103,8 +105,9 @@ answer within two minutes is a refusal. See [VRCNext Bridge](native-companion.md
 
 ## Writing a plugin that prompts well
 
-- Pre-declare the hosts, actions and events you know you need. One consent modal at enable is
-  better than five prompts in the first minute.
+- Pre-declare the actions and events you know you need. One consent modal at enable is better
+  than five prompts in the first minute. Declare your hosts too: each one still prompts on first
+  use, but the list tells the user up front where the plugin talks to.
 - Put optional capabilities in `optionalPermissions` and request them from a button, not from
   `activate`.
 - Do not retry a denied call in a loop; the answer is cached for the session and the loop just
