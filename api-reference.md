@@ -163,8 +163,9 @@ Rejoin: {{ rejoin ? "yes" : "no" }}           C-style conditional
 {% endraw %}
 
 Expressions: literals, dotted names, `== != < <= > >=`, `and or not` (or `&& || !`), `+`/`-`,
-both conditional forms, and filters `upper lower capitalize trim length default yesno join
-replace truncate`. A missing name renders empty; a line whose placeholders all rendered empty is
+both conditional forms, and filters `upper lower capitalize trim length size default yesno join
+replace truncate get` (`size` is `length` under Liquid's name; `get: "key"` reads a field). `elseif`
+is accepted as a spelling of `elif`. A missing name renders empty; a line whose placeholders all rendered empty is
 dropped (`dropEmptyLines`). A broken template throws `TemplateError`; `validateTemplate` reports
 it without rendering. Small pure helpers plugins keep needing live in the api package, not in
 plugins.
