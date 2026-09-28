@@ -88,6 +88,13 @@ The page keeps the token and the endpoint in `localStorage`, scoped to VRCNext's
 and a new port is a new origin, so you would have to paste the token again. The installer's
 `--pin-port` fixes the port for that reason.
 
+### The REST surface is off by default
+
+The page only needs the socket. Without flags the bridge serves exactly two paths: `/v1/ws` and
+`GET /v1/health`. The per-call REST surface (`GET /v1/describe`, `POST /v1/<service>/<method>`
+with the token as a Bearer header) exists for scripts and debugging and answers 404 unless the
+bridge was started with `--rest`. Every REST call still needs the token.
+
 ### The Bridge card
 
 Until the bridge is connected, the **Plugins** tab shows only the Bridge card. Its four states:
