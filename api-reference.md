@@ -237,14 +237,39 @@ and `isEntityId(kind, id)` checks one id.
 ```ts
 function renderEmbed(template: EmbedTemplate, values: TemplateValues,
   options?: { at?: Date; onError?: (error: Error) => void }): DiscordEmbed | undefined;
-function webhookPayload(embed: DiscordEmbed,
+function discordWebhookPayload(embed: DiscordEmbed,
   options?: { username?: string; content?: string }): DiscordWebhookPayload;
 function parseEmbedColor(text: string): number | undefined;
 ```
 
 Every text of the template is rendered with the template engine, empty parts are dropped, URLs
 that are not `http(s)` are refused, everything is cut to Discord's limits, and `undefined` comes
-back when nothing is left. `webhookPayload` always sets `allowed_mentions: { parse: [] }`.
+back when nothing is left. `discordWebhookPayload` always sets `allowed_mentions: { parse: [] }`.
+
+### Posting to a Discord webhook
+
+```ts
+function isDiscordWebhookUrl(url: string): boolean;
+function webhookFailure(status: number): string;
+function postWebhook(options: {
+  http: HttpApi; logger: Logger; url: string;
+  payload: DiscordWebhookPayload; label?: string;
+}): Promise<{ ok: boolean; status?: number; error?: string }>;
+```
+
+`postWebhook` is the whole send: it refuses a URL that is not a `discord.com` webhook without
+making a request, writes the full payload to the log at `debug` before it goes out, turns a
+refusal into a sentence the user can act on, and never rejects — a failed channel should not take
+its siblings down with it. `label` names the sender in each line, for a plugin with more than one
+webhook.
+
+Declare `discord.com` in your manifest's `hosts`. The webhook URL is a bearer credential for that
+channel: it never appears in the log or in a failure message, so do not put it in one yourself.
+
+The payload dump is not optional, and that is deliberate. When Discord does not render what you
+meant, the only way to tell "Discord ignored it" from "I did not send it" is to see the bytes —
+the two look identical from outside, a missing picture and a `204`. It is `debug`, so it is
+written only while **Verbose debug logging** is on.
 
 ### Discord text
 

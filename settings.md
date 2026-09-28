@@ -149,18 +149,24 @@ report: {
 // at send time
 const embed = renderEmbed(ctx.settings.get('report'), values);
 if (embed !== undefined) {
-  await ctx.http.fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(webhookPayload(embed, { username: 'My plugin' })),
+  const result = await postWebhook({
+    http: ctx.http,
+    logger: ctx.logger,
+    url,
+    payload: discordWebhookPayload(embed, { username: 'My plugin' }),
   });
+  if (!result.ok) ctx.logger.warn(String(result.error));
 }
 ```
 
 `renderEmbed` fills every text, drops what rendered empty, refuses URLs that are not `http(s)`,
 cuts everything to Discord's limits, and returns `undefined` when nothing is left — Discord
 rejects an empty embed. `color` accepts `#rrggbb`, a decimal, or a name (`green`, `orange`, `red`,
-`blue`, `yellow`, `grey`). `webhookPayload` never allows mentions.
+`blue`, `yellow`, `grey`). `discordWebhookPayload` never allows mentions.
+
+Post with [`postWebhook`](api-reference.md#posting-to-a-discord-webhook) rather than calling
+`ctx.http.fetch` yourself: it checks the URL, logs the payload, explains a refusal and never
+throws.
 
 ### Objects and lists
 
