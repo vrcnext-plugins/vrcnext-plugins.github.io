@@ -272,7 +272,8 @@ read, so the line drops instead of printing `NaN`.
 `VrcWorldSummary` · `VrcWorld` · `VrcGroupSummary` · `VrcGroup` · `VrcInstance` ·
 `VrcInstanceUser` · `VrcFriendInstance` · `VrcTimelineEvent` · `VrcSearchPage<T>` ·
 `VrcLookupOptions` · `VrcSearchOptions` · `PerformanceRank` · `PERFORMANCE_RANKS` · `rankIndex()`
-· `rankLabel()` · `rankEmoji()` · `RANK_EMOJI` · `TrustRank` · `TRUST_RANKS` · `trustRank()`
+· `rankLabel()` · `rankEmoji()` · `RANK_EMOJI` · `TrustRank` · `TRUST_RANKS` · `trustRank()` ·
+`publicImageUrl()` · `isPublicImageUrl()`
 
 ```ts
 interface VrchatApi {
@@ -314,6 +315,11 @@ interface VrcSearchOptions { readonly offset?: number; readonly signal?: AbortSi
 A lookup with no answer resolves `undefined`; unknown strings are `''` and unknown tri-states
 `undefined`. `PERFORMANCE_RANKS` = `'Excellent' | 'Good' | 'Medium' | 'Poor' | 'VeryPoor'`, and
 `rankIndex` turns one into 0–4 (`undefined` for `''`).
+
+A picture's URL is usually VRCNext's local image cache, which only loads inside the app. Before
+putting one in an embed, a webhook or anything else that leaves, pass it through
+`publicImageUrl(url)` — it gives back `''` for an address only this machine can reach, so the field
+drops rather than rendering blank. See [VRChat data](vrchat-data.md#pictures-that-leave-the-app).
 
 Show a rank with `rankLabel(rank)` — `Very Poor`, not `VeryPoor`, and `Unknown` for `''` — and
 `rankEmoji(rank)` for VRChat's traffic-light colour (🟢🔵🟡🟠🔴, ⚪ unknown); `RANK_EMOJI` is that

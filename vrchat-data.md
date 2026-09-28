@@ -118,6 +118,30 @@ if (have === undefined) reportUnverified();       // not "too heavy" — unknown
 else if (have > want) reportTooHeavy();
 ```
 
+## Pictures that leave the app
+
+A user's `imageUrl` is **VRCNext's image cache on this machine** —
+`http://localhost:<port>/imgcache/Users/usr_….png` — and the same is true of most pictures the app
+shows. Inside the page it is exactly what you want. Anywhere else it is nothing: a Discord embed
+built with one renders a field with no picture, no error and nothing in the log, because Discord
+fetches the image from its own servers.
+
+So check any URL that leaves:
+
+```ts
+import { publicImageUrl } from '@vrcnext/plugin-api';
+
+// VRChat serves this one itself, so it loads anywhere.
+const profile = publicImageUrl(user.currentAvatarImageUrl) || publicImageUrl(user.imageUrl);
+const avatar  = publicImageUrl(avatarDetail.thumbnailImageUrl);
+```
+
+`publicImageUrl(url)` gives back the URL when something off this machine could load it and `''`
+when it could not — loopback, a private or link-local address, a `.local` name, a `data:` blob, a
+relative path. Empty is deliberate: a template drops a field whose value is empty, so the report
+loses the picture instead of pointing the reader's Discord at your laptop. `isPublicImageUrl(url)`
+is the same question as a boolean.
+
 ## Instances
 
 `VrcInstance` carries the parsed location so you do not have to take it apart:
