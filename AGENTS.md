@@ -16,6 +16,9 @@ The only documentation for every VRCNext Plugins repository. GitHub Pages builds
 - Before committing, check every relative link and anchor resolves (a heading's anchor is its
   lower-cased text, punctuation dropped, spaces as `-`).
 - Commit messages end with a `Co-Authored-By:` trailer naming the model that wrote the commit.
+- **Workflows run only by hand.** Every workflow's only trigger is `workflow_dispatch`; automatic
+  triggers (`push`, `pull_request`, tags, schedules) stay commented out. Never run a workflow
+  yourself — the owner dispatches them.
 
 ## Other repositories
 
