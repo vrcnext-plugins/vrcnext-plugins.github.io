@@ -8,6 +8,9 @@ The only documentation for every VRCNext Plugins repository. GitHub Pages builds
 - Every page is Markdown at the root with `title` front matter, an `# H1` equal to it, and a
   `[← Back to index](./)` line. Link to other pages as `page.md` (Jekyll rewrites to `.html`).
 - Every page is listed in a table on `index.md`.
+- Jekyll runs every page through Liquid, so `{{` or `{%` anywhere (template examples) breaks the
+  build or renders blank: wrap them in `{% raw %}` … `{% endraw %}`. Check with
+  `ruby -rliquid -e 'Dir["*.md"].each { |f| Liquid::Template.parse(File.read(f)) }'`.
 - Tables that mirror code must match it: `source-policy.md` ↔ the bridge's `policy.rs` and
   `obfuscation.rs`; `permissions.md` and `plugin-json.md` ↔ `packages/api/src/permissions.ts`;
   `api-reference.md` ↔ `@vrcnext/plugin-api`'s exports; the event counts ↔

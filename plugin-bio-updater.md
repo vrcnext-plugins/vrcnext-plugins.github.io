@@ -1,6 +1,7 @@
 ---
 title: Bio Updater
 ---
+{% raw %}
 
 # Bio Updater
 
@@ -105,3 +106,4 @@ Every release is signed by this key; check it against the one VRCNext shows when
 ```
 1bc6-e13e-c44c-3bd0-f5a8-5618-8b9b-919c
 ```
+{% endraw %}
