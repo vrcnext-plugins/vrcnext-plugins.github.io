@@ -16,3 +16,17 @@ The only documentation for every VRCNext Plugins repository. GitHub Pages builds
 - Before committing, check every relative link and anchor resolves (a heading's anchor is its
   lower-cased text, punctuation dropped, spaces as `-`).
 - Commit messages end with a `Co-Authored-By:` trailer naming the model that wrote the commit.
+
+## Other repositories
+
+Each has its own `AGENTS.md`; read the one for any repository you change. Checkouts sit side by
+side, so the local path is a sibling directory.
+
+| Repository | Local | What it is |
+| :--- | :--- | :--- |
+| [`vrcnext-plugin-system`](https://github.com/vrcnext-plugins/vrcnext-plugin-system/blob/main/AGENTS.md) | `../vrcnext-plugin-system/AGENTS.md` | host, `@vrcnext/plugin-api`, installer, VRCNext protocol tools |
+| [`vrcnext-bridge`](https://github.com/vrcnext-plugins/vrcnext-bridge/blob/main/AGENTS.md) | `../vrcnext-bridge/AGENTS.md` | the native daemon: install pipeline, source policy, signing, services |
+| [`vrcnext-example-plugin`](https://github.com/vrcnext-plugins/vrcnext-example-plugin/blob/main/AGENTS.md) | `../vrcnext-example-plugin/AGENTS.md` | the template plugin; a submodule of the plugin system |
+| [`vrcnext-club-security-plugin`](https://github.com/vrcnext-plugins/vrcnext-club-security-plugin/blob/main/AGENTS.md) | `../vrcnext-club-security-plugin/AGENTS.md` | Club Security plugin |
+| [`vrcnext-bio-updater-plugin`](https://github.com/vrcnext-plugins/vrcnext-bio-updater-plugin/blob/main/AGENTS.md) | `../vrcnext-bio-updater-plugin/AGENTS.md` | Bio Updater plugin |
+| [`vrcnext-patches-plugin`](https://github.com/vrcnext-plugins/vrcnext-patches-plugin/blob/main/AGENTS.md) | `../vrcnext-patches-plugin/AGENTS.md` | VRCNext Patches plugin |
