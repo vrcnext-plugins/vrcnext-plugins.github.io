@@ -98,7 +98,7 @@ curl -s http://127.0.0.1:42081/v1/health
 | `--rate` / `--burst` | `5` / `10` | Token bucket. Each paired socket gets its own; other sites' requests draw from a separate one. |
 | `--threads` | `4` | Runtime worker threads. Services run on a separate blocking pool. |
 | `--log` | `info` | `debug` logs every delivery. |
-| `--dev` | off | Developer mode: the REST call surface and `remote/eval`, which runs snippets inside the page. Never needed for normal use. See [Remote control](#remote-control). |
+| `--dev` | off | Developer mode: the REST call surface, `remote/eval` (snippets inside the page), and no native confirmation — installs and updates go through unasked and are only announced. Never needed for normal use. See [Remote control](#remote-control). |
 
 Each also reads an environment variable — see `vrcnext-bridge --help`.
 

@@ -354,6 +354,12 @@ What is done about it:
   120 s silence, a broken session bus or no prompt at all are all a refusal; the service answers
   `denied` or `approval_unavailable` and logs why. "Update all" is one prompt per plugin. `build`
   and `state` do not prompt — they put nothing new into the page.
+  **`--dev` turns this off.** A developer redeploying a plugin twenty times an hour cannot answer
+  twenty prompts, so a bridge started with `--dev` approves every privileged operation without
+  asking and posts a plain notification saying what it let through. That means anything holding
+  the pairing token can install code into the page unattended — which is no more than `--dev`
+  already granted through `remote/eval`, and is exactly why `--dev` is not for normal use. The
+  startup banner says so in both places.
 - **Code only arrives from a key the user accepted.** A confirmation says yes to a URL, and a
   URL is not an identity — a repository changes hands and an account takeover rewrites every
   branch at once. So every tree also has to carry an Ed25519 signature over its own files, bound
