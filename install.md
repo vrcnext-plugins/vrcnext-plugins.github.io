@@ -131,7 +131,7 @@ Both scripts keep every release-asset name and URL at the top of the file. They 
 - `vrcnext-bridge` releases with `vrcnext-bridge-linux-x86_64`, `vrcnext-bridge-windows-x86_64.exe`,
   `vrcnext-bridge-macos-aarch64` and `SHA256SUMS` (built by that repo's `release.yml`);
 - `vrcnext-plugin-system` releases with `vrcnext-plugin-host-src.tar.gz` and `SHA256SUMS`
-  (built by `.github/workflows/release.yml` here on every `v*` tag).
+  (built by `.github/workflows/release.yml` here, run by hand with the tag to release).
 
 To bump esbuild: read `https://registry.npmjs.org/esbuild/latest`, download each
 `https://registry.npmjs.org/@esbuild/<platform>/-/<platform>-<VER>.tgz`, and update the version
