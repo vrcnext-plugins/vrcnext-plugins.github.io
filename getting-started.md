@@ -31,7 +31,7 @@ Requirements: `curl` and `tar` on Linux/macOS; Windows 10 1803+ for the built-in
 Node, no git, no Rust. Re-running the installer is an upgrade: binaries and host sources are
 replaced, your plugins, state and token are kept, and the bundle is rebuilt. Flags (`--pin-port`,
 `--version`, `--dry-run`), the on-disk layout and uninstall steps are in the
-[installer README](https://github.com/vrcnext-plugins/vrcnext-plugin-system/blob/main/install/README.md).
+[installer](install.md) page.
 
 The installer ends by printing a **pairing token** in a box, and three steps.
 

@@ -28,10 +28,16 @@ it up, registers it to start with your session, and prints the pairing token.
 
 | Service | Does |
 | :--- | :--- |
-| `plugins` | install / list / check_updates / update / uninstall / build — clones, validates [plugin.json](plugin-json.md) and the [source policy](source-policy.md), compiles the bundle |
+| `plugins` | install / list / check_updates / update / uninstall / build — clones, validates [plugin.json](plugin-json.md), the [source policy](source-policy.md) and the [signature](signing.md), compiles the bundle |
 | `state` | the page's key-value store, `state.json`: enabled flags, saved permission grants, plugin settings |
 | `notify` | notifications to VR overlays and the desktop, individually targetable |
 | `logs` | appends the page's log lines to `plugins.log` |
+| `outbound` | the HTTP requests behind `ctx.http`, to public addresses only |
+| `osc` | OSC on loopback, behind `ctx.osc` where VRCNext's own OSC is unavailable |
+| `sql` | reads VRCNext's SQLite databases by alias, for the host's `ctx.vrchat` |
+| `remote` | only with `--dev`: runs a snippet inside the page |
+
+The protocol, every endpoint and the full security design are on [Bridge reference](bridge.md).
 
 ### The build
 
@@ -202,12 +208,11 @@ when at least one target accepted, because that is what happened. It never rejec
 that is not running — that is a normal state, not an exception. Inspect `failed` if you care
 which.
 
-### Any service
+### Calling `notify` directly
 
-`call(service, method, params)` reaches any bridge service over the shared socket, so a bridge
-that grows a new service is usable from a plugin immediately, without a plugin-system release.
-It rejects when the socket closes before the answer, on timeout, or when the bridge answers with
-an error — the latter as a `NativeRequestError` carrying the bridge's own `code`.
+`call('notify', method, params)` reaches the notification service's methods as the bridge
+defines them. It rejects when the socket closes before the answer, on timeout, or when the bridge
+answers with an error — the latter as a `NativeRequestError` carrying the bridge's own `code`.
 
 ### Limits
 
@@ -224,8 +229,8 @@ a `failed` entry from `notify()`:
 | `height` | 16–1024 |
 | `sinks` | at most 8 names, 32 characters each |
 
-There is also a rate limit — 5/s with a burst of 10 by default, shared between the socket and
-plain HTTP. A notification puts pixels in front of someone wearing a headset; a runaway loop is
+There is also a rate limit — 5/s with a burst of 10 by default, per paired socket, so another
+site hammering the bridge's port cannot slow the page. A notification puts pixels in front of someone wearing a headset; a runaway loop is
 otherwise an accident that needs them to take it off.
 
 ## Security, briefly
@@ -235,14 +240,14 @@ preflight, and the preflight is refused for non-loopback origins; the WebSocket 
 `Origin` itself, since CORS does not cover it; the pairing token covers what an origin check
 cannot. No service may execute a program or write to a caller-chosen path, except the build
 module's one checksum-verified binary. The full reasoning is in the
-[bridge README](https://github.com/vrcnext-plugins/vrcnext-bridge#security); what it means for
+[bridge reference](bridge.md#security); what it means for
 plugins is on the [security model](security.md) page.
 
 ## Running it by hand
 
 The installer registers autostart (systemd user unit, launchd agent, or a Scheduled Task). To
 run, inspect or troubleshoot it directly — `--print-token`, `--data-dir`, "no session bus",
-`esbuild checksum mismatch` — see the bridge's
-[running guide](https://github.com/vrcnext-plugins/vrcnext-bridge/blob/main/docs/running.md).
+`esbuild checksum mismatch` — see
+[Running the bridge](bridge-running.md).
 
 [← Notifications](notifications.md) · [Context menus →](context-menus.md)

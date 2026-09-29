@@ -6,3 +6,8 @@ markdown: kramdown
 kramdown:
   input: GFM
   syntax_highlighter: rouge
+exclude:
+  - AGENTS.md
+  - CLAUDE.md
+  - README.md
+  - LICENSE

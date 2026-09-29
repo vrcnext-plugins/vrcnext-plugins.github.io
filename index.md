@@ -93,8 +93,10 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 
 | Plugin | What it does |
 | :--- | :--- |
-| [Club Security](https://github.com/vrcnext-plugins/vrcnext-club-security-plugin) | Per-club presets that report who joins your instance and whether they meet the club's rules. |
-| [Bio Updater](https://github.com/vrcnext-plugins/vrcnext-bio-updater-plugin) | Writes your bio, status, pronouns and links from templates, fitted by priority rather than cut. |
+| [Club Security](plugin-club-security.md) | Per-club presets that report who joins your instance and whether they meet the club's rules. |
+| [Bio Updater](plugin-bio-updater.md) | Writes your bio, status, pronouns and links from templates, fitted by priority rather than cut. |
+| [VRCNext Patches](plugin-patches.md) | Small fixes VRCNext does not make: media-library folders, unattended sign-in. |
+| [The template plugin](plugin-example.md) | Every capability, one per file — start a plugin from it. |
 
 **Reference**
 
@@ -106,6 +108,16 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | [Security model](security.md) | What plugins can do, and what the system does about it. |
 | [Limitations](limitations.md) | What is genuinely impossible without patching VRCNext. |
 | [API reference](api-reference.md) | Every exported type, one page. |
+
+**Internals**
+
+| Page | What it covers |
+| :--- | :--- |
+| [Installer](install.md) | What the one-line installer does, its flags, layout and uninstalling. |
+| [Bridge reference](bridge.md) | The daemon's protocol, services, install pipeline, build and security design. |
+| [Running the bridge](bridge-running.md) | Autostart, flags, remote control, troubleshooting. |
+| [Plugin system internals](plugin-system.md) | How the host boots and is built, its repository layout, development. |
+| [Design: the pre-bundled architecture](design-aot-bundle.md) | The original plan, kept for its reasoning. |
 
 ## Honest scope
 
@@ -133,6 +145,7 @@ Everything else on this site is implemented and type-checked against VRCNext **2
 | [vrcnext-plugin-system](https://github.com/vrcnext-plugins/vrcnext-plugin-system) | The host, the typed `@vrcnext/plugin-api` contract and the installer. |
 | [vrcnext-example-plugin](https://github.com/vrcnext-plugins/vrcnext-example-plugin) | The template repository: a working plugin using every capability, one per file. |
 | [vrcnext-bridge](https://github.com/vrcnext-plugins/vrcnext-bridge) | The native companion daemon. Rust, loopback only, one WebSocket. |
+| [vrcnext-club-security-plugin](https://github.com/vrcnext-plugins/vrcnext-club-security-plugin), [vrcnext-bio-updater-plugin](https://github.com/vrcnext-plugins/vrcnext-bio-updater-plugin), [vrcnext-patches-plugin](https://github.com/vrcnext-plugins/vrcnext-patches-plugin) | The plugins above. |
 | [vrcnext-plugins.github.io](https://github.com/vrcnext-plugins/vrcnext-plugins.github.io) | This site. |
 
 ## A note on trust
