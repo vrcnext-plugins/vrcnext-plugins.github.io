@@ -62,15 +62,22 @@ In the order the bridge reports them:
 | `__receiveMessageCallbacks` | anywhere; it is VRCNext's own message channel |
 | `Reflect.get` | `Reflect.get(` |
 | `document.cookie` | `document.cookie` |
+| `document[` | `document[`, so `document['cook' + 'ie']` is refused |
+| `document.location`, `location.href`, `location.assign` | navigating the page away, which is also a way to send data out |
 | `localStorage`, `sessionStorage`, `indexedDB` | the name, even after a dot, so `self.localStorage` is refused |
 | `XMLHttpRequest`, `fetch`, `WebSocket`, `EventSource` | the word, called or referenced. `ctx.http.fetch(` and `ctx.router.fetch(` are fine, and so is `fetchStars` |
-| `navigator.sendBeacon` | anywhere |
+| `sendBeacon` | the name, even after a dot, so `const n = navigator; n.sendBeacon(…)` is refused |
 | `Worker`, `SharedWorker`, `importScripts` | the word |
-| `dynamic import` | `import(` |
+| `dynamic import` | `import(`, however it is spaced: `import (` too |
 | `script tag` | `<script` anywhere |
-| `innerHTML assignment` | `.innerHTML =` (a comparison or a read is fine) |
+| `innerHTML assignment`, `outerHTML assignment` | `.innerHTML =`, `.innerHTML +=`, and the same for `outerHTML` (a comparison or a read is fine) |
 | `insertAdjacentHTML` | `insertAdjacentHTML` anywhere |
-| `setTimeout with a string` | `setTimeout(` whose first argument is a string literal |
+| `srcdoc` | the name, even after a dot |
+| `createElement of a code-loading tag` | `createElement(` of `script`, `iframe`, `frame`, `object` or `embed` |
+| `setTimeout with a string`, `setInterval with a string` | the timer whose first argument is a string literal |
+| `constructor` | `.constructor` or `['constructor']`: `Object.getPrototypeOf(async () => {}).constructor` is a `Function` constructor without the word. A class's own `constructor(…) {` is fine |
+| `import outside the plugin` | an import specifier that climbs past the plugin's root (`'../../state.json'`), an absolute path, or a `data:`/`file:` URL |
+| `imports a test file` | an import of a `*.test.*` or `*.spec.*` file (see below) |
 | `require` | the word `require` |
 | `process` | `process.` |
 | `references a tooling config` | a source file, or any `.json` file, that names one of the exempt files below, in any letter case. `package.json`'s `scripts` block is not checked. |
@@ -84,6 +91,14 @@ exist because those names reach the same object through another path.
 Also enforced: at most **200 source files** and **2 MiB** of source in total, no symlinks inside
 the clone. `.git/` and non-source files such as `README.md` are not scanned.
 
+**The build checks too.** A text scan can only guess what a specifier means; esbuild knows. Every
+build asks it for the list of files it bundled and refuses the bundle unless each one is the
+host, the generated import table, or a file inside an installed plugin's own directory — and a
+plugin's files may import only each other and `@vrcnext/plugin-api`. So `state.json` (every
+plugin's settings), a config file elsewhere on disk, the host's internal modules and another
+plugin's files cannot reach a bundle however the import is spelled. An install or update whose
+build fails is rolled back.
+
 Both lists live in Rust modules in the bridge (`policy.rs` and `obfuscation.rs` under
 `crates/vrcnext-bridge-plugins/src/`) with a unit test per rule, and this page mirrors them.
 
@@ -92,9 +107,13 @@ Both lists live in Rust modules in the bridge (`policy.rs` and `obfuscation.rs` 
 It is a **text scan**, not a parser. It is meant to catch honest mistakes and make dishonest
 ones obvious in a review, not to be unbypassable, and the bridge's own documentation says so.
 A plugin that wants to reach `window` badly enough can find a spelling this list does not cover.
-What the policy guarantees is narrower and still useful: a plugin that follows it reaches the
-network only through `ctx.http`, the clipboard only through `ctx.clipboard`, VRCNext only through
-`ctx.bridge`, and all of those are gated by [permissions](permissions.md) the user can see.
+It does **not** confine a plugin to `ctx.*`. Plain DOM work is allowed, and the DOM has ways
+out that no rule here covers: an `<img>` or `<link>` whose URL a plugin sets is a request to that
+URL, CSS `url()` is another, and the page's own elements — VRCNext's login form included — can be
+read like any other. What the policy does is make the obvious routes (`fetch`, storage, `eval`,
+the window) fail loudly, so that what is left looks deliberate in a review. Those routes are
+gated by [permissions](permissions.md) the user can see; the rest is trust in the author, which
+is what [signing](signing.md) is for.
 
 Plain DOM work is allowed. `document.createElement`, `addEventListener`, `textContent`,
 `IntersectionObserver` and friends are how plugin UI gets built; the policy is about reaching
@@ -108,14 +127,17 @@ rest are one-line fixes.
 
 ## What is not scanned
 
-Two narrow exemptions, both for files that exist to configure or release the plugin and never
-reach the bundle: the tooling configs at the repository root (`eslint.config.*`,
-`vitest.config.*`) and `scripts/sign-plugin.mjs`, the [signing tool](signing.md), which runs
-under Node and has to name `process` and `Buffer` to do its job. Both are exempt by exact path.
-Any source file that mentions one of them is refused, in any letter case, and so is any `.json`
-file that names one, such as an `imports` alias in `package.json` or a `paths` entry in a
-tsconfig. Importing an exempt file would pull it into the bundle unscanned, which is the whole
-thing the exemption must not allow.
+Three narrow exemptions, all for files that never reach the bundle: the tooling configs at the
+repository root (`eslint.config.*`, `vitest.config.*`), `scripts/sign-plugin.mjs`, the
+[signing tool](signing.md), which runs under Node and has to name `process` and `Buffer` to do
+its job, and test files (`*.test.*`, `*.spec.*`), since a fake of `ctx.http` has to write
+`fetch`. The first two are exempt by exact path.
+
+Importing an exempt file would pull it into the bundle unscanned, which is the whole thing the
+exemption must not allow. So a source file whose import specifier names one is refused (in any
+letter case; naming one in a comment is fine), any `.json` file that names a tooling config or
+the signer is refused (an `imports` alias in `package.json`, a `paths` entry in a tsconfig), and
+the build refuses a bundle that has a test file among its inputs.
 
 ## Dependencies
 

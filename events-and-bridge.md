@@ -21,6 +21,12 @@ manifest can name every one you will ever use, and the enable dialog can therefo
 user a complete list of what the plugin reaches. `"*"` declares the whole stream, which is what
 `ctx.events.onAny` needs; the dialog shows that too.
 
+**One event is different.** `vrcPrefillLogin` is VRCNext filling its login form from the saved
+account, and it carries the **password** in plain text. Declaring it grants nothing: the first
+subscription asks the user, in those words, at high tone. `onAny` never delivers it — a plugin
+that wants it has to ask for it by name. `host:intercept` sees the outbound `vrcLogin` and
+`vrc2FA` actions, which is part of why it is high risk.
+
 This is deliberately unlike `hosts`, where an undeclared host still prompts: a URL can come
 from a setting the user typed, an action name cannot. See [Permissions](permissions.md).
 

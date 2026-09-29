@@ -51,9 +51,9 @@ plugin can reach. The wording below is the user-facing contract, taken from the 
 | :--- | :--- | :--- |
 | `network` | per host | *Plugin {name} ({id}) wants to request data from {host}* for GET/HEAD, *… wants to send data to {host}* for anything else. Details: method, URL, headers, body. |
 | `host:actions` | never — the `actions` list is exhaustive and an undeclared name throws | — |
-| `host:events` | never — the `events` list is exhaustive and an undeclared name throws; `"*"` declares the whole stream | — |
-| `host:intercept` | once per plugin | *… wants to observe and drop actions VRCNext sends to its backend* |
-| `native` | per `service/method` | *… wants to call the bridge: {service}/{method}*. Details: the parameters. |
+| `host:events` | never — the `events` list is exhaustive and an undeclared name throws; `"*"` declares the whole stream. **Except `vrcPrefillLogin`**, which carries your VRChat password: declaring it is not enough, it is asked about every time it is first used, at high tone, and `onAny` never receives it | *… wants to read your VRChat password, from the VRCNext event vrcPrefillLogin* |
+| `host:intercept` | once per plugin | *… wants to observe and drop actions VRCNext sends to its backend*. Details say it sees `vrcLogin` (with the password) and `vrc2FA`. |
+| `native` | per `service/method`, `notify` only | *… wants to call the bridge: {service}/{method}*. Details: the parameters. Any other service (`state`, `plugins`, `sql`, `logs`, `outbound`, `osc`, `remote`) is refused with a `PermissionError` before anything is asked or sent. |
 | `osc` | once per plugin | *… wants to send and receive OSC through VRCNext* |
 | `vrchat` | once per plugin | *… wants to read VRChat data through VRCNext*. Until the answer is in, the synchronous `ctx.vrchat.self()` returns `undefined`; the async methods wait. |
 | `gamelog` | once per plugin | *… wants to read the VRChat game log* |

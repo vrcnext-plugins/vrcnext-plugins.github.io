@@ -415,7 +415,7 @@ of VRCNext does. `INSTANCE_TYPE_LABELS` is that map. Use it rather than showing 
 interface EventBus {
   on<T extends string>(type: T, listener: EventListener<T>): () => void;
   once<T extends string>(type: T, listener: EventListener<T>): () => void;
-  onAny(listener: (envelope: HostEnvelope) => void): () => void;   // prompts: "listen to every VRCNext event"
+  onAny(listener: (envelope: HostEnvelope) => void): () => void;   // needs "*"; never receives vrcPrefillLogin
   next<T extends string>(type: T, signal?: AbortSignal): Promise<EventPayload<T>>;
 }
 ```
@@ -657,7 +657,8 @@ interface NativeNotifyResult {
 
 The bridge is connected whenever a plugin runs, so there is no `available`, `status` or `probe`.
 `notify()` resolves with `ok: false` rather than rejecting when no target accepted; `call()`
-rejects with an error carrying the bridge's own `code`. See [VRCNext Bridge](native-companion.md).
+reaches the `notify` service only (anything else rejects with a `PermissionError`), and rejects
+with an error carrying the bridge's own `code` when the bridge refuses. See [VRCNext Bridge](native-companion.md).
 
 ## Game log
 

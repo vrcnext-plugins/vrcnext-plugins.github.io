@@ -64,19 +64,27 @@ git commit -am "Sign"
 ```
 
 The signer refuses a dirty working tree on purpose — the bytes on your disk would not be the
-bytes anyone else receives.
+bytes anyone else receives. It reads each file from git's objects rather than from disk, so a
+Windows checkout with `core.autocrlf` signs the same LF bytes the bridge's clone receives.
 
-### From GitHub Actions
+**Sign locally.** A signature is worth something because it proves the *key holder* made the
+tree, not merely someone who can push to the repository. That is the case it exists for: an
+account or token takeover rewrites every branch, and the pinned key is what notices.
 
-Put the 64 hex characters from `keygen` in a repository secret named `VRCNEXT_SIGNING_KEY`
-(Settings → Secrets and variables → Actions), and copy `scripts/plugin-sign-workflow.yml` from
-the plugin system into `.github/workflows/sign.yml`. Every push to `main` signs the
-tree and commits `plugin.sig` back.
+### From GitHub Actions, if you must
 
-The secret never leaves the runner; only the signature is pushed. The tradeoff is a short window
-between your push and the signing job finishing, during which the branch is unsigned and the
-bridge refuses to install it. Signing locally and committing `plugin.sig` alongside the code has
-no such window.
+A job that signs whatever lands on `main` gives up exactly that: anyone who can push gets their
+code signed, and anyone who can add a workflow can read the secret. If you sign in Actions
+anyway, copy `scripts/plugin-sign-workflow.yml` from the plugin system into
+`.github/workflows/sign.yml`; it is shaped to limit the damage:
+
+- it runs only by hand (`workflow_dispatch`), never on push;
+- it takes `VRCNEXT_SIGNING_KEY` from an **environment** named `signing` (Settings →
+  Environments), where you turn on **required reviewers** so every run waits for your approval,
+  and restrict it to `main`;
+- use **one key per plugin**, so one compromised repository cannot sign for the others.
+
+The secret never leaves the runner; only the signature is pushed.
 
 ## The format
 
@@ -96,9 +104,16 @@ no such window.
 
 `digest` is `sha256` over `"vrcnext-plugin-tree-v1\n"` followed by, for every file in path
 order, its `/`-separated relative path, a NUL, its length as eight little-endian bytes, and its
-contents. Symlinks and submodules are skipped, as they are in the clone. The signature covers
-`"vrcnext-plugin-signature-v1\n" + id + "\n" + digest + "\n"`, which is what binds it to one
-plugin. `signedAt` is advisory — the signer chose it, and nothing depends on it.
+contents. A submodule contributes nothing (the clone does not fetch it). A **symlink anywhere
+refuses the tree** — the bridge will not install it, and the signer will not sign it. The
+signature covers `"vrcnext-plugin-signature-v1\n" + id + "\n" + digest + "\n"`, which is what
+binds it to one plugin.
+
+`signedAt` is chosen by the signer, and the bridge uses it for one thing: an update whose
+signature is **older** than the installed tree's is refused, as is one whose `version` is lower.
+A signature proves who made a tree, not that it is their latest, and without this someone who
+controls the repository but not the key could put an old signed commit back. Going back on
+purpose is an uninstall and a fresh install.
 
 The fingerprint is the first 16 bytes of the public key hex string's `sha256`, in groups of
 four. It exists to be compared by eye, which is why it is grouped rather than run together.

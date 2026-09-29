@@ -54,6 +54,10 @@ none of them holds against a malicious plugin the user has already enabled.
   without checking it against what the author publishes.
 - The source policy is a text scan, not a parser. It catches honest mistakes and makes dishonest
   ones obvious in a review; a determined author can find a spelling it does not cover.
+  (Imports are checked for real: the build refuses any file outside the plugin's own directory.)
+- **The DOM is not covered by any permission.** A plugin can read what the page shows, including
+  what VRCNext puts in its own login form, and an element it creates can load a URL (`<img src>`,
+  CSS `url()`), which is a request `ctx.http` never sees.
 - The permission prompts are rendered by the host, in the page. A plugin that has already
   escaped the `ctx.*` path could, in principle, click its own prompt. That is exactly why the
   operations that *add* code — install, update, uninstall — are confirmed natively instead.

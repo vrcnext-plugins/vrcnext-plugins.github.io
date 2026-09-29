@@ -60,9 +60,9 @@ and risk tone the consent modal shows:
 | `host:events` | low | Receive VRCNext events, limited to the event names listed in plugin.json. |
 | `host:actions` | high | Send actions to VRCNext on your behalf, limited to the action names listed in plugin.json. Actions act on your real VRChat account. |
 | `host:intercept` | high | Observe and drop every action VRCNext sends to its backend, including its own. |
-| `network` | medium | Make HTTP requests, limited to the hosts listed in plugin.json. |
+| `network` | medium | Make HTTP requests. Each host is asked about before its first request, declared in plugin.json or not. |
 | `notifications` | low | Show toasts, confirmation dialogs and desktop notifications. |
-| `native` | medium | Call the VRCNext Bridge: VR overlay and desktop notification targets. |
+| `native` | medium | Send notifications through the VRCNext Bridge to your VR overlay and desktop. Only the bridge's notification service is reachable. |
 | `osc` | medium | Send and receive OSC avatar parameters through VRCNext. |
 | `gamelog` | medium | Read the VRChat game log, live and its backlog. |
 | `vrchat` | medium | Read VRChat data through VRCNext: your friends, favourites, groups and instance, and look up users, avatars, worlds and groups without opening their dialogs. |

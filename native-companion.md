@@ -144,6 +144,13 @@ interface NativeApi {
 }
 ```
 
+`call` reaches the `notify` service only. The bridge's other services belong to the host: `state`
+holds every plugin's settings and the permission grants themselves, `outbound` and `osc` are
+behind `ctx.http` and `ctx.osc` with gates of their own, and `plugins`, `sql`, `logs` and
+`remote` are not a plugin's to call. Naming one rejects with a `PermissionError` before anything
+is sent — a grant is remembered per `service/method`, not per parameters, so one "allow" of
+`state/set` would otherwise let a plugin rewrite its own grants.
+
 Every one is a bridge call, and each `service/method` is confirmed by the user the first time
 the plugin uses it — *Plugin {name} ({id}) wants to call the bridge: notify/send*, with the
 parameters in the details. See [Permissions](permissions.md). A denied call rejects with a
