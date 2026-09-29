@@ -84,7 +84,11 @@
         border-radius: 0 0 6px 6px;
         padding: 0.5rem 0;
         min-width: 15rem;
+        /* A menu wider than the window would otherwise run off the right edge. The script nudges
+           it back; wrapping is what happens if the script never runs. */
+        max-width: calc(100vw - 1rem);
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
       }
@@ -188,13 +192,29 @@
         if (!bar) return;
         var menus = Array.prototype.slice.call(bar.querySelectorAll('details'));
 
+        // A three-column menu is wider than a phone and wider than the room left of a summary
+        // near the right end of the bar. Pull it back inside the window, from wherever it landed.
+        function place(menu) {
+          var panel = menu.querySelector('.site-nav__menu');
+          if (!panel) return;
+          panel.style.left = '';
+          if (!window.matchMedia('(min-width: 801px)').matches) return;
+          var overflow = panel.getBoundingClientRect().right - (window.innerWidth - 8);
+          if (overflow > 0) panel.style.left = String(-overflow) + 'px';
+        }
+
         menus.forEach(function (menu) {
           menu.addEventListener('toggle', function () {
             if (!menu.open) return;
             menus.forEach(function (other) {
               if (other !== menu) other.open = false;
             });
+            place(menu);
           });
+        });
+
+        window.addEventListener('resize', function () {
+          menus.forEach(function (menu) { if (menu.open) place(menu); });
         });
 
         document.addEventListener('click', function (event) {
