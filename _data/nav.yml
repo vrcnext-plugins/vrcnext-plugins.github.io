@@ -1,0 +1,99 @@
+# The navigation bar, rendered by _layouts/default.html.
+#
+# A top-level entry with `url` is a plain link; one with `groups` is a dropdown. Every group may
+# carry a `label`, which becomes a heading inside the dropdown. URLs are site-relative and end in
+# `.html`: Jekyll only rewrites `.md` links inside Markdown, never inside a layout.
+#
+# The order here is the reading order: what a user needs first, then the two audiences who go
+# deeper. Adding a page means adding it here *and* to the table on index.md.
+
+- title: Home
+  url: /
+
+- title: Install
+  url: /install.html
+
+- title: Using plugins
+  url: /using-plugins.html
+
+- title: Plugins
+  groups:
+    - items:
+        - title: Club Security
+          url: /plugin-club-security.html
+        - title: Bio Updater
+          url: /plugin-bio-updater.html
+        - title: VRCNext Patches
+          url: /plugin-patches.html
+        - title: The template plugin
+          url: /plugin-example.html
+
+- title: Development
+  groups:
+    - label: Start here
+      items:
+        - title: Getting started
+          url: /getting-started.html
+        - title: Plugin anatomy
+          url: /plugin-anatomy.html
+        - title: plugin.json
+          url: /plugin-json.html
+        - title: Permissions
+          url: /permissions.html
+        - title: Settings
+          url: /settings.html
+        - title: Source policy
+          url: /source-policy.html
+    - label: Capabilities
+      items:
+        - title: Events & actions
+          url: /events-and-bridge.html
+        - title: UI injection
+          url: /ui.html
+        - title: Notifications
+          url: /notifications.html
+        - title: VRCNext Bridge
+          url: /native-companion.html
+        - title: Context menus
+          url: /context-menus.html
+        - title: OSC
+          url: /osc.html
+        - title: Game log
+          url: /game-log.html
+        - title: VRChat data
+          url: /vrchat-data.html
+        - title: Routes & deep links
+          url: /routes-and-links.html
+        - title: Logging
+          url: /logging.html
+    - label: Reference
+      items:
+        - title: API reference
+          url: /api-reference.html
+        - title: Publishing & updates
+          url: /publishing.html
+        - title: Signing plugins
+          url: /signing.html
+        - title: Using TSX
+          url: /tsx.html
+        - title: Security model
+          url: /security.html
+        - title: Limitations
+          url: /limitations.html
+
+- title: Contributing
+  groups:
+    - label: Start here
+      items:
+        - title: Contributing
+          url: /contributing.html
+    - label: Internals
+      items:
+        - title: Plugin system internals
+          url: /plugin-system.html
+        - title: Bridge reference
+          url: /bridge.html
+        - title: Running the bridge
+          url: /bridge-running.html
+        - title: "Design: the pre-bundled architecture"
+          url: /design-aot-bundle.html

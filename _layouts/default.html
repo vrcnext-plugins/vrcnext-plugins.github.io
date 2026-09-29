@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'en-US' }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if page.title and page.title != site.title %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+    <meta name="description" content="{{ page.description | default: site.description }}">
+    <!-- jekyll-theme-cayman's own stylesheet; this layout replaces the theme's HTML, not its CSS. -->
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <style>
+      /*
+        The navigation bar. Written here rather than in _sass so that overriding the theme costs
+        one file: the theme ships its own stylesheet and a Sass override would have to be kept in
+        step with it. Dropdowns are <details>, so they open, close and reach the keyboard without
+        any script; the script at the end of <body> only adds the conveniences <details> has no
+        opinion about — closing a sibling, an outside click, and Escape.
+      */
+      :root {
+        --nav-bg: #1b1f23;
+        --nav-fg: #d8dee4;
+        --nav-fg-strong: #ffffff;
+        --nav-hover: #2d333b;
+        --nav-accent: #79b8ff;
+        --nav-border: #30363d;
+      }
+      .site-nav {
+        background: var(--nav-bg);
+        color: var(--nav-fg);
+        font-size: 15px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+      .site-nav__inner {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: flex;
+        align-items: stretch;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+      .site-nav a { color: var(--nav-fg); text-decoration: none; }
+      .site-nav__brand {
+        font-weight: 600;
+        color: var(--nav-fg-strong) !important;
+        padding: 0.7rem 0.75rem 0.7rem 0;
+        margin-right: 0.5rem;
+        white-space: nowrap;
+      }
+      .site-nav__link,
+      .site-nav details > summary {
+        display: block;
+        padding: 0.7rem 0.75rem;
+        cursor: pointer;
+        list-style: none;
+        white-space: nowrap;
+      }
+      .site-nav details > summary::-webkit-details-marker { display: none; }
+      .site-nav details > summary::after {
+        content: '▾';
+        margin-left: 0.35rem;
+        opacity: 0.7;
+        font-size: 0.85em;
+      }
+      .site-nav__link:hover,
+      .site-nav details > summary:hover,
+      .site-nav details[open] > summary {
+        background: var(--nav-hover);
+        color: var(--nav-fg-strong);
+      }
+      .site-nav [aria-current='page'] {
+        color: var(--nav-fg-strong);
+        box-shadow: inset 0 -3px 0 var(--nav-accent);
+      }
+      .site-nav details { position: relative; }
+      .site-nav__menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: var(--nav-bg);
+        border: 1px solid var(--nav-border);
+        border-radius: 0 0 6px 6px;
+        padding: 0.5rem 0;
+        min-width: 15rem;
+        display: flex;
+        gap: 0.5rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      .site-nav__group { min-width: 13rem; }
+      .site-nav__group + .site-nav__group { border-left: 1px solid var(--nav-border); }
+      .site-nav__group-label {
+        display: block;
+        padding: 0.35rem 1rem;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        opacity: 0.6;
+      }
+      .site-nav__menu a {
+        display: block;
+        padding: 0.35rem 1rem;
+        white-space: nowrap;
+      }
+      .site-nav__menu a:hover { background: var(--nav-hover); color: var(--nav-fg-strong); }
+      .site-nav__menu [aria-current='page'] { box-shadow: inset 3px 0 0 var(--nav-accent); }
+
+      /* Narrow screens: no room for a floating menu, so a dropdown opens in the flow instead. */
+      @media (max-width: 800px) {
+        .site-nav__inner { padding: 0 0.5rem; }
+        .site-nav details { position: static; width: 100%; }
+        .site-nav__menu {
+          position: static;
+          flex-direction: column;
+          border-left: 0;
+          border-right: 0;
+          border-radius: 0;
+          box-shadow: none;
+          min-width: 0;
+        }
+        .site-nav__group + .site-nav__group {
+          border-left: 0;
+          border-top: 1px solid var(--nav-border);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <nav class="site-nav" aria-label="Site">
+      <div class="site-nav__inner">
+        <a class="site-nav__brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+        {% for entry in site.data.nav %}
+          {% if entry.url %}
+            {% assign target = entry.url | relative_url %}
+            <a class="site-nav__link" href="{{ target }}"{% if page.url == entry.url %} aria-current="page"{% endif %}>{{ entry.title }}</a>
+          {% else %}
+            {% assign open_here = false %}
+            {% for group in entry.groups %}
+              {% for item in group.items %}
+                {% if item.url == page.url %}{% assign open_here = true %}{% endif %}
+              {% endfor %}
+            {% endfor %}
+            <details class="site-nav__dropdown">
+              <summary{% if open_here %} aria-current="page"{% endif %}>{{ entry.title }}</summary>
+              <div class="site-nav__menu">
+                {% for group in entry.groups %}
+                  <div class="site-nav__group">
+                    {% if group.label %}<span class="site-nav__group-label">{{ group.label }}</span>{% endif %}
+                    {% for item in group.items %}
+                      <a href="{{ item.url | relative_url }}"{% if item.url == page.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </nav>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">{{ page.title | default: site.title }}</h1>
+      <h2 class="project-tagline">{{ page.description | default: site.description }}</h2>
+      {% if site.github.repository_url %}
+        <a href="{{ site.github.repository_url }}" class="btn">View on GitHub</a>
+      {% endif %}
+    </header>
+
+    <main id="content" class="main-content" role="main">
+      {{ content }}
+
+      <footer class="site-footer">
+        {% if site.github.is_project_page %}
+          <span class="site-footer-owner"><a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
+        {% endif %}
+        <span class="site-footer-credits">This page uses the <a href="https://github.com/pages-themes/cayman">Cayman theme</a> for <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+
+    <script>
+      // <details> handles open/close and the keyboard on its own. These three behaviours are the
+      // ones it has no opinion about, and the bar is still usable without any of them.
+      (function () {
+        var bar = document.querySelector('.site-nav');
+        if (!bar) return;
+        var menus = Array.prototype.slice.call(bar.querySelectorAll('details'));
+
+        menus.forEach(function (menu) {
+          menu.addEventListener('toggle', function () {
+            if (!menu.open) return;
+            menus.forEach(function (other) {
+              if (other !== menu) other.open = false;
+            });
+          });
+        });
+
+        document.addEventListener('click', function (event) {
+          if (bar.contains(event.target)) return;
+          menus.forEach(function (menu) { menu.open = false; });
+        });
+
+        document.addEventListener('keydown', function (event) {
+          if (event.key !== 'Escape') return;
+          menus.forEach(function (menu) {
+            if (!menu.open) return;
+            menu.open = false;
+            var summary = menu.querySelector('summary');
+            if (summary) summary.focus();
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

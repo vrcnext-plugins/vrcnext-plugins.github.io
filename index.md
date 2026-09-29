@@ -63,7 +63,14 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 
 ## Documentation
 
-**Start here**
+**Using VRCNext plugins**
+
+| Page | What it covers |
+| :--- | :--- |
+| [Installer](install.md) | The one-line install, what it sets up, its flags, and how to remove it again. |
+| [Using plugins](using-plugins.md) | Finding, installing, enabling, updating and removing a plugin — and what to check when one misbehaves. |
+
+**Writing one — start here**
 
 | Page | What it covers |
 | :--- | :--- |
@@ -109,34 +116,20 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | [Limitations](limitations.md) | What is genuinely impossible without patching VRCNext. |
 | [API reference](api-reference.md) | Every exported type, one page. |
 
+**Contributing**
+
+| Page | What it covers |
+| :--- | :--- |
+| [Contributing](contributing.md) | Working on these repositories: the gates, the rules that hold everywhere, signing, the local loop. |
+
 **Internals**
 
 | Page | What it covers |
 | :--- | :--- |
-| [Installer](install.md) | What the one-line installer does, its flags, layout and uninstalling. |
 | [Bridge reference](bridge.md) | The daemon's protocol, services, install pipeline, build and security design. |
 | [Running the bridge](bridge-running.md) | Autostart, flags, remote control, troubleshooting. |
 | [Plugin system internals](plugin-system.md) | How the host boots and is built, its repository layout, development. |
 | [Design: the pre-bundled architecture](design-aot-bundle.md) | The original plan, kept for its reasoning. |
-
-## Honest scope
-
-Three things are **not possible** from a theme-injected host, and this project does not pretend
-otherwise:
-
-1. **Real HTTP routes.** VRCNext's web server is a C# `HttpListener` with a fixed route table.
-   Plugin routes work inside the page only — `curl` cannot reach them.
-2. **Custom `vrcn://` prefixes.** VRCNext validates the link type in C# against a closed list and
-   drops anything else before the page ever sees it.
-3. **Writing to VRCNext's log file.** There is no page→C# action that logs arbitrary text. The
-   Logs panel, its download button and the bridge's `plugins.log` are the supported equivalents.
-
-Separately, several VRCNext features are **Windows-only in VRCNext itself** — OSC, the VR
-overlay, the chatbox and more. See the [platform matrix](limitations.md). For notifications
-there is a way around this: the [VRCNext Bridge](native-companion.md) reaches VR overlays and the desktop
-on any platform, because it is a separate process rather than the page.
-
-Everything else on this site is implemented and type-checked against VRCNext **2026.61.2**.
 
 ## Repositories
 
