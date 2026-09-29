@@ -39,7 +39,7 @@ can start from it and delete what you do not need.
 | `src/state.ts` | the session state the sections share, and the one function they log through |
 | `src/sections/events.ts` | typed host events, the untyped escape hatch, settings changes |
 | `src/sections/game-log.ts` | the VRChat game log: live, by type, and the backlog |
-| `src/sections/osc.ts` | OSC in and out, guarded on `available` (Windows only) |
+| `src/sections/osc.ts` | OSC in and out, guarded on `available` |
 | `src/sections/deep-links.ts` | `wrld:` / `usr:` links VRCNext delivers |
 | `src/sections/routes.ts` | in-page HTTP routes, reachable from this page and nothing else |
 | `src/sections/context-menu.ts` | items, dividers, submenus, and the clipboard |

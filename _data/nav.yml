@@ -7,9 +7,6 @@
 # The order here is the reading order: what a user needs first, then the two audiences who go
 # deeper. Adding a page means adding it here *and* to the table on index.md.
 
-- title: Home
-  url: /
-
 - title: Install
   url: /install.html
 

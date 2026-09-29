@@ -17,7 +17,7 @@ against the VRCNext source at 2026.61.2 rather than assumed.
 | **Custom `vrcn://` prefixes** | `DeepLinkService.Parse` validates against a closed list and returns `null` otherwise, so unknown prefixes are dropped in C# before the page sees them. |
 | **Writing to disk from a plugin** | The page has no filesystem access. Everything persistent — settings, enabled flags, saved grants — goes through the [bridge](native-companion.md)'s state store, which is the only thing that can write a file. |
 | **Interleaving context-menu items** | `getMenuConfig` is module-closure-scoped; contributions are appended after VRCNext's own items. |
-| **New OSC ports** | VRCNext owns the sockets. Plugins send and receive through it, sharing one OSCQuery advertisement. |
+| **New OSC ports through VRCNext** | On Windows VRCNext owns the sockets and plugins share its one OSCQuery advertisement. (On Linux VRCNext holds nothing, and the bridge binds them instead — see below.) |
 
 ## By design in the plugin system
 
@@ -28,7 +28,7 @@ against the VRCNext source at 2026.61.2 rather than assumed.
 | **npm dependencies** | The bridge has no package manager. Anything a plugin imports must be committed into the repository, where it is scanned by the [source policy](source-policy.md) and counts against the 200-file / 2 MiB limits. |
 | **Reaching `window`, `fetch`, `localStorage`, …** | Refused at install by the source policy, so that everything a plugin does outside its own panels goes through `ctx.*` and the [permission gate](permissions.md) can see it. |
 | **A sandbox** | A plugin is compiled into the same bundle as the host and runs with the page's authority. Permissions and the policy make what it does declared and confirmed; they do not contain a plugin that is determined to misbehave. See [Security model](security.md). |
-| **Silent installs** | Install, update and uninstall are confirmed natively — a notification on Linux, a message box on Windows — because the page cannot be trusted to confirm code being added to itself. Without a prompt channel the bridge refuses. |
+| **Silent installs** | Install, update and uninstall are confirmed natively — a notification on Linux, a message box on Windows — because the page cannot be trusted to confirm code being added to itself. Without a prompt channel the bridge refuses. The one exception is a bridge started with `--dev`, which approves every prompt itself and only announces it; that flag is for developing the system, not for running it. |
 
 ## Windows-only in VRCNext
 
@@ -38,7 +38,7 @@ feature is unreachable from the page, and VRCNext hides the matching sidebar ent
 
 | Prefix | Feature | Plugin impact |
 | :--- | :--- | :--- |
-| `osc` | OSC Tool | **`ctx.osc` is inert** — check `ctx.osc.available` |
+| `osc` | OSC Tool | **`ctx.osc` goes to the bridge instead** — still check `ctx.osc.available` |
 | `vro` | VR wrist overlay | `ctx.notifications.desktop()` no-ops |
 | `chatbox` | Custom Chatbox | `ctx.bridge.send('chatbox…')` dropped |
 | `vf` | Voice Fight | dropped |
@@ -54,15 +54,22 @@ feature is unreachable from the page, and VRCNext hides the matching sidebar ent
 and overlay work inside it is `#if WINDOWS`, so nothing happens. That is why
 `ctx.notifications.desktopAvailable` exists.
 
-### The notification gate has a way around it
+### Two of these gates have a way around them
 
 These gates are in VRCNext, and the page cannot escape them. A **separate process** is not subject
-to them at all — which is what the [VRCNext Bridge](native-companion.md) is. `ctx.native` reaches
-VR overlays and the desktop notification daemon on Linux and Windows alike, because the daemon
-talks to them directly rather than asking VRCNext to.
+to them at all — which is what the [VRCNext Bridge](native-companion.md) is, so where the bridge
+can do the work itself, the gate stops mattering:
 
-It is a workaround for notifications only. OSC stays gated: `ctx.osc` goes through VRCNext's own
-sockets, and no bridge service exposes OSC today.
+- **Notifications.** `ctx.native` reaches VR overlays and the desktop notification daemon on Linux
+  and Windows alike, because the daemon talks to them directly rather than asking VRCNext to.
+- **OSC.** The bridge's `osc` service binds VRChat's ports itself, so on Linux `ctx.osc` sends and
+  receives through the bridge rather than through VRCNext. They are the same sockets either way
+  (VRChat listens on 9000 and sends to 9001), a plugin cannot tell which path carried a message,
+  and VRCNext's own path is preferred wherever it works — two programs should not fight over one
+  OSCQuery advertisement. Loopback only, in both directions.
+
+The rest of the prefix table has no way around it: chatbox, Media Relay, Discord Presence and the
+others are features inside VRCNext, not sockets someone else can hold.
 
 Everything else — events, actions without those prefixes, the game log, UI, context menus,
 routes, settings, logging — works on both platforms.
@@ -103,8 +110,11 @@ These work, but depend on VRCNext internals with no stability guarantee:
 
 The build, the type gate and the unit tests are green: the permission broker, the state client,
 the settings store, the compiled-table reader, the bridge socket and every source-policy rule are
-tested without a DOM. The modals, the manager panel, the boot sequence and the installer have
-**not** been exercised inside a running VRCNext against a real bridge. Treat UI behaviour as
-unverified until you have run it.
+tested without a DOM, and the settings form is tested in JSDOM.
+
+Beyond that, the boot sequence, the manager panel, install, update, the desktop confirmation and
+the published plugins have been run inside a real VRCNext against a real bridge, **on Linux
+only**. What that does not cover: Windows and macOS end to end, VR overlay output in a headset,
+and the OSC paths against a live VRChat. Treat those as unverified.
 
 [← Security model](security.md) · [API reference →](api-reference.md)

@@ -49,7 +49,7 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | Observe or drop the actions VRCNext sends | `ctx.bridge.interceptOutbound` | `host:intercept` |
 | Outbound HTTP — the only `fetch` a plugin has | `ctx.http` | `network` |
 | VR overlay and desktop notifications through the bridge *(any platform)* | `ctx.native` | `native` |
-| OSC send and receive through VRCNext's sockets *(Windows only)* | `ctx.osc` | `osc` |
+| OSC send and receive — through VRCNext on Windows, through the bridge on Linux | `ctx.osc` | `osc` |
 | VRChat game log stream and backlog | `ctx.gameLog` | `gamelog` |
 | In-app toasts and confirm modals; OS tray + SteamVR overlay *(Windows only)* | `ctx.notifications` | `notifications` |
 | Context-menu items, dividers and submenus | `ctx.contextMenu` | `context-menu` |
@@ -90,7 +90,7 @@ the repository URL into the Plugins tab. The bridge compiles it; nothing is buil
 | [Notifications](notifications.md) | In-app, desktop tray, **SteamVR overlay**, confirm modals; VR and desktop via the bridge. |
 | [VRCNext Bridge](native-companion.md) | What the daemon does, pairing, status, `ctx.native`. |
 | [Context menus](context-menus.md) | Items, dividers, submenus, entity targets. |
-| [OSC](osc.md) | Sending and receiving OSC through VRCNext. |
+| [OSC](osc.md) | Sending and receiving OSC — through VRCNext, or through the bridge where VRCNext has none. |
 | [Game log](game-log.md) | The VRChat log stream and backlog. |
 | [VRChat data](vrchat-data.md) | Friends, favourites, groups, instances and lookups — without opening VRCNext's dialogs. |
 | [Routes & deep links](routes-and-links.md) | In-page HTTP routes, `vrcn://` links, and their limits. |

@@ -6,18 +6,20 @@ title: OSC
 
 [← Back to index](./)
 
-> ## OSC is Windows-only in VRCNext
+> ## OSC is Windows-only *in VRCNext* — the bridge covers Linux
 >
 > `MessageRouter.IsWindowsOnlyAction` drops any action starting with `osc` followed by an
 > uppercase letter, so **`oscSend`, `oscSendRaw`, `oscConnect` and `oscDisconnect` never reach
 > the backend on Linux.** VRCNext hides its own OSC Tool tab there, and its Action Flow OSC
 > blocks are equally inert — they emit the same two actions.
 >
-> There is no workaround from the page. Guard your code:
+> Where VRCNext holds nothing, the [bridge](native-companion.md)'s `osc` service holds the
+> sockets instead, and `ctx.osc` routes to it. You write the same code either way. Still guard,
+> because an older bridge has no `osc` service:
 >
 > ```ts
 > if (!ctx.osc.available) {
->   ctx.logger.info('OSC needs Windows; skipping.');
+>   ctx.logger.info('No OSC on this setup; skipping.');
 >   return;
 > }
 > ```
@@ -27,10 +29,12 @@ title: OSC
 `ctx.osc` needs the `osc` permission, and the user confirms it once per plugin on first use —
 *Plugin {name} ({id}) wants to send and receive OSC through VRCNext*.
 
-VRCNext owns the OSC sockets: it sends to `127.0.0.1:9000`, listens on `9001` with
-`SO_REUSEADDR`, and advertises an extra receive port over OSCQuery. Plugins do **not** open
-sockets — they ask VRCNext to send and subscribe to what it receives. That keeps one OSCQuery
-advertisement and avoids fighting VRChat over port 9001.
+Plugins never open a socket themselves. On Windows VRCNext owns them: it sends to
+`127.0.0.1:9000`, listens on `9001` with `SO_REUSEADDR`, and advertises an extra receive port
+over OSCQuery, and plugins ask it to send and subscribe to what it receives. On Linux the bridge
+binds the same two ports on loopback and pushes what arrives to the page. VRCNext's own path is
+preferred wherever it works, so there is still one OSCQuery advertisement and nothing fights
+VRChat over port 9001.
 
 ## Sending
 
@@ -68,7 +72,10 @@ with `hasInput` / `hasOutput` flags.
 
 ## Caveats
 
-- **`available` is `false` on Linux** — see the warning above. This is the first thing to check.
+- **Check `available` first.** It is true when VRCNext carries OSC (Windows) or when the bridge
+  offers its `osc` service (any platform, a bridge new enough to have one).
+- **`onAvatarChange` carries no parameter list on the bridge path.** VRChat sends only the avatar
+  id on `/avatar/change`; the list VRCNext's own event adds is empty rather than invented.
 - **Parameters arrive only while OSC is enabled in VRChat.** If nothing fires, OSC is off in the
   VRChat radial menu, or another app has bound 9001 without `SO_REUSEADDR`.
 - `onParam` can fire *very* often — dozens of times a second with a parameter-heavy avatar.
