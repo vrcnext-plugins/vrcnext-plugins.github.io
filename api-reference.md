@@ -298,7 +298,7 @@ read, so the line drops instead of printing `NaN`.
 `VrcInstanceUser` · `VrcFriendInstance` · `VrcTimelineEvent` · `VrcSearchPage<T>` ·
 `VrcLookupOptions` · `VrcSearchOptions` · `PerformanceRank` · `PERFORMANCE_RANKS` · `rankIndex()`
 · `rankLabel()` · `rankEmoji()` · `RANK_EMOJI` · `TrustRank` · `TRUST_RANKS` · `trustRank()` ·
-`publicImageUrl()` · `isPublicImageUrl()`
+`publicImageUrl()` · `isPublicImageUrl()` · `imageCacheKey()` · `imageCacheKeyFor()` · `ImageSubject`
 
 ```ts
 interface VrchatApi {
@@ -331,7 +331,15 @@ interface VrchatApi {
   searchWorlds(query: string, o?: VrcSearchOptions & { sort?: string }): Promise<VrcSearchPage<VrcWorldSummary>>;
   searchGroups(query: string, o?): Promise<VrcSearchPage<VrcGroupSummary>>;
   searchAvatars(query: string, o?): Promise<VrcSearchPage<VrcAvatarSummary>>;
+
+  originalImageUrl(subject: ImageSubject, o?): Promise<string>;         // '' when VRCNext never cached it
 }
+
+type ImageSubject =
+  | { kind: 'user';   id: string; variant?: 'avatar' | 'pfp' | 'banner' }
+  | { kind: 'avatar'; id: string }
+  | { kind: 'group';  id: string; variant?: 'icon' | 'banner' }
+  | { kind: 'world';  id: string };
 
 interface VrcLookupOptions { readonly cached?: boolean; readonly signal?: AbortSignal }
 interface VrcSearchOptions { readonly offset?: number; readonly signal?: AbortSignal }
@@ -345,6 +353,27 @@ A picture's URL is usually VRCNext's local image cache, which only loads inside 
 putting one in an embed, a webhook or anything else that leaves, pass it through
 `publicImageUrl(url)` — it gives back `''` for an address only this machine can reach, so the field
 drops rather than rendering blank. See [VRChat data](vrchat-data.md#pictures-that-leave-the-app).
+
+When it does give back `''`, `originalImageUrl(subject)` is the second chance: VRCNext recorded
+where it downloaded each picture from, and this reads that address back through the bridge. Ask in
+that order — what the lookup already handed you first, this only when every candidate turned out to
+be local:
+
+```ts
+const fromLookup = publicImageUrl(avatar?.thumbnailImageUrl);
+const url = fromLookup !== ''
+  ? fromLookup                                                    // VRCNext fetched it anyway
+  : await ctx.vrchat.originalImageUrl({ kind: 'avatar', id });     // one lookup in VRCNext's database
+```
+
+Neither path asks VRChat for anything. `''` covers every way it can come up empty — the picture was
+never cached, the bridge is not connected, the id is not one — so treat `''` as "leave the field
+out". Answers are cached for the session; absences are not, because the picture VRCNext has not
+downloaded yet is the one your next report needs. Check the result anyway if you like paranoia: the
+host already runs it through `publicImageUrl` on the way out.
+
+`imageCacheKeyFor(subject)` builds the key VRCNext files a picture under, and `imageCacheKey(url)`
+recovers it from a cache URL. Both are pure, and neither needs the bridge.
 
 Show a rank with `rankLabel(rank)` — `Very Poor`, not `VeryPoor`, and `Unknown` for `''` — and
 `rankEmoji(rank)` for VRChat's traffic-light colour (🟢🔵🟡🟠🔴, ⚪ unknown); `RANK_EMOJI` is that
