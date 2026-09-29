@@ -6,8 +6,10 @@ title: Events & actions
 
 [← Back to index](./)
 
-VRCNext's frontend talks to its C# backend over a Photino channel: roughly **474 outbound
-actions** and **310 inbound events**. Plugins get both, behind three permissions:
+VRCNext's frontend talks to its C# backend over a Photino channel: **415 actions** the backend
+dispatches and **311 events** it sends, as read from its source (see
+[Checking against VRCNext](#checking-against-vrcnext)). Plugins get both, behind three
+permissions:
 
 | Permission | Tone | Unlocks | Confirmed on first use |
 | :--- | :--- | :--- | :--- |
@@ -29,6 +31,26 @@ that wants it has to ask for it by name. `host:intercept` sees the outbound `vrc
 
 This is deliberately unlike `hosts`, where an undeclared host still prompts: a URL can come
 from a setting the user typed, an action name cannot. See [Permissions](permissions.md).
+
+## Checking against VRCNext
+
+VRCNext publishes no protocol, so the plugin system reads one out of its C# source:
+[`protocol/vrcnext-protocol.json`](https://github.com/vrcnext-plugins/vrcnext-plugin-system/blob/main/protocol/vrcnext-protocol.json)
+lists every action with the arguments its handler reads and whether a Linux build drops it,
+every event with its payload fields, and the frontend's element ids and classes, pinned to the
+VRCNext commit it was read from. `@vrcnext/plugin-api` exports the names as types:
+`VrcnextAction`, `VrcnextEvent`, `VrcnextWindowsOnlyAction` and `VrcnextEventFields`.
+
+Check your plugin against it from a clone of the plugin system:
+
+```bash
+node scripts/check-vrcnext-protocol.mjs ../my-plugin
+```
+
+It reports an action or event VRCNext does not have (in your sources and in `plugin.json`), an
+event used as an action, an argument the action's handler never reads, a selector naming an
+element VRCNext does not have, and — as a warning — an action VRCNext drops on Linux and macOS.
+Nothing is asked of the network; it reads your files and the JSON.
 
 (`ctx.bridge` is the VRCNext bridge — the Photino channel — not the
 [VRCNext Bridge](native-companion.md) daemon, which is `ctx.native`. The name predates the

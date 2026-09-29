@@ -32,7 +32,9 @@ is scanned by the [source policy](source-policy.md) like your own code.
 
 Run the template's `npm run check` before pushing. Its ESLint config flags most policy rules
 locally, and a repository that fails the policy or the manifest schema is refused at install
-with the file, line and rule, which is a poor first impression.
+with the file, line and rule, which is a poor first impression. The plugin system's
+[protocol check](events-and-bridge.md#checking-against-vrcnext) is worth running too: it
+catches an action, event, argument or selector VRCNext does not have.
 
 ## Supported repository URLs
 
