@@ -32,7 +32,7 @@ The verdict reaches your templates as `{result}`, `{resultText}`, `{resultEmoji}
 | :--- | :--- | :--- |
 | Identity | Preset name, Enabled | The name appears in every report as `{preset}`. |
 | Filters | Instance types, Group, Worlds | One of each kind. Empty means "any". A pickable group and worlds, not pasted ids. |
-| Requirements | Require 18+, PC / Quest avatar rank at least, Must be a member of, Must be on my friend list, Trust score at least | Each one becomes a check with its own verdict. |
+| Requirements | Require 18+, PC / Quest / iOS avatar rank at least, Must be a member of, Must be on my friend list, Trust score at least | Each one becomes a check with its own verdict. The rank floors are one ordered scale: `Unknown or better` accepts anything and so checks nothing, while `VeryPoor or better` — the next rung — accepts every rank that exists but not an avatar nothing could rank. |
 | Exceptions | Never check these people | Picked from your friends, favourites or the instance. Staff join and change avatar without a report. |
 | Avatars | Warn when someone here switches avatar | Re-checks the avatar limits alone against the new avatar. |
 | Channels | In-app toast, Desktop, VR overlay, Discord | Per preset, so a strict club can post to Discord while a relaxed one only toasts. |
@@ -110,13 +110,13 @@ the field red rather than rendering as nothing an hour later.
 | Verdict | `result` `resultText` `resultEmoji` `resultColor` `checksText` `checksPlainText` `failedText` `unverifiedText` |
 | Player | `name` `userId` `profileUrl` `userImageUrl` `platform` `platformEmoji` `isFriend` `friendText` `ageVerified` `ageVerifiedText` `ageVerifiedEmoji` `ageStatus` |
 | Trust | `trustScore` `trustScoreText` `trustScoreEmoji` `trustText` — the standing as a percentage, empty when the profile could not be read. Whether it is *required* is the preset's **Trust score at least**; these render it wherever you want it |
-| Avatar | `avatar` `avatarId` `avatarImageUrl` `avatarLink` `avatarPlain` `ranksText` `pcRank` `pcRankText` `pcRankEmoji` `questRank` `questRankText` `questRankEmoji` |
+| Avatar | `avatar` `avatarId` `avatarImageUrl` `avatarLink` `avatarPlain` `ranksText` `pcRank` `pcRankText` `pcRankEmoji` `questRank` `questRankText` `questRankEmoji` `iosRank` `iosRankText` `iosRankEmoji` — `ranksText` lists one line per platform the avatar is built for, so a platform it has no build for is left out rather than reported as unknown |
 | Activity | `logText` — the player's recent records as Discord lines |
 | How you know them | `meets` `meetsText` `timeTogether` `timeTogetherSeconds` `firstMet` `firstMetAgo` `firstMetSince` `lastSeenAgo` `lastSeenSince` `dbEntries` — VRCNext's own records of the two of you. `dbEntries` counts every row in its database that mentions them and needs the `sql` permission |
 | What you did to them | `blocked` `muted` `chatMuted` `avatarHidden` `interactOff`, each with an `…Emoji` — your own moderation, read from the lists VRCNext already holds. Empty, not `false`, when a list was never loaded |
 | Who they are | `trustRank` `languages` `pronouns` `status` `statusText` `statusDescription` `note` `dateJoined` `joinedAgo` `joinedSince` `lastLoginAgo` `lastLoginSince` `lastActivityAgo` `lastActivitySince` `allowAvatarCopying` `allowAvatarCopyingText` |
 | Club | `preset` `inGroup` `inGroupText` `inGroupEmoji` |
-| What the preset asked for | `presetRequiredAge` `presetRequiredFriend` `presetRequiredPcRank` `presetRequiredQuestRank` `presetRequiredGroup` `presetRequiredTrustScore` — the floors this preset set, as opposed to what the joiner turned out to be. A requirement it does not check has no value, so a line naming one is dropped rather than printing "any" |
+| What the preset asked for | `presetRequiredAge` `presetRequiredFriend` `presetRequiredPcRank` `presetRequiredQuestRank` `presetRequiredIosRank` `presetRequiredGroup` `presetRequiredTrustScore` — the floors this preset set, as opposed to what the joiner turned out to be. A requirement it does not check has no value, so a line naming one is dropped rather than printing "any" |
 | History | `rejoin` `rejoinText` `rejoinEmoji` `rejoinAgo` `rejoinSince` `rejoinAt` — all about *this* instance |
 | How well the club knows them | `eventCount` `eventOrdinal` — how many of this preset's instances VRCNext has seen them in, this one included, as a number and as `5th`. One per instance, so a weekend spent in one room counts once. A player can be new to this room and a regular at the door, which is what `rejoin` cannot say. With the `sql` permission it counts every instance in VRCNext's database; without it, only the ten records a timeline read returns, so it stops climbing at ten. Empty when VRCNext has no history at all, so the title counts nothing rather than claiming a hundredth visit is the first |
 | Place and time | `world` `worldId` `instanceType` `instanceId` `location` `time` `date` `timestamp` |
