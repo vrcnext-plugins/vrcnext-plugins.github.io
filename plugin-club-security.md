@@ -106,7 +106,8 @@ the field red rather than rendering as nothing an hour later.
 | Activity | `logText` — the player's recent records as Discord lines |
 | Club | `preset` `inGroup` `inGroupText` `inGroupEmoji` |
 | What the preset asked for | `presetRequiredAge` `presetRequiredFriend` `presetRequiredPcRank` `presetRequiredQuestRank` `presetRequiredGroup` `presetRequiredTrustScore` — the floors this preset set, as opposed to what the joiner turned out to be. A requirement it does not check has no value, so a line naming one is dropped rather than printing "any" |
-| History | `rejoin` `rejoinText` `rejoinEmoji` `rejoinAgo` `rejoinSince` `rejoinAt` |
+| History | `rejoin` `rejoinText` `rejoinEmoji` `rejoinAgo` `rejoinSince` `rejoinAt` — all about *this* instance |
+| How well the club knows them | `eventCount` `eventOrdinal` — how many of this preset's instances VRCNext has seen them in, this one included, as a number and as `5th`. One per instance, so a weekend spent in one room counts once. A player can be new to this room and a regular at the door, which is what `rejoin` cannot say. Empty when VRCNext has no timeline for them, so the title counts nothing rather than claiming a hundredth visit is the first |
 | Place and time | `world` `worldId` `instanceType` `instanceId` `location` `time` `date` `timestamp` |
 
 `avatar`, `avatarLink` and `avatarPlain` are empty when VRCNext cannot name the avatar, which
@@ -127,7 +128,7 @@ Everything goes through `ctx.vrchat`, which reads VRCNext's data **without openi
 | Group membership | The groups the user shows publicly. | A member who hides the membership is unverified, not a failure. |
 | Friendship | Your friend list. | — |
 | Trust score | The profile score VRChat stopped showing, rebuilt from account age, 18+ status, a bio and groups joined. Asked for with the **Trust score at least** slider; at 0 nothing is checked and the score is left out of the report. | Badges and uploaded content are not in what VRCNext pushes, so they are left out of the total rather than counted as failures. A profile that could not be read is unverified, never a failure. |
-| Recent activity | VRCNext's timeline, worded by the plugin system: `Blocked by you`, ``Visited `Jellybean` #52792 (Friends+)``, `Friend request from **X**`. Identical records collapse into one line with a `×2`, and a group instance names its group when VRCNext knows it. | Ten records deep per player, so a busy account's log is short. |
+| Recent activity | VRCNext's timeline, worded by the plugin system: `Blocked by you`, ``Met again in `Jellybean #52792` (Friends+)``, `Friend request from **X**`. Every arrival at one instance is one line with a `×2`, a group instance names its group when VRCNext knows it, and the last row is the oldest record there is — usually the day you met — with a `...` row above it for what sits between. | As deep as VRCNext's timeline goes for that player, so a busy account's log reaches back less far. |
 | Rejoin | VRCNext's timeline: the player's ten most recent events, each with its location. Yes when one of them is this exact instance (same world **and** instance id) from before this join. | Survives restarts and reaches back to when VRCNext was installed, but only ten events deep per player. |
 
 Each lookup runs in parallel and degrades to "unknown" on its own timeout rather than holding up
