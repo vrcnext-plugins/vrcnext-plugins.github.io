@@ -97,6 +97,11 @@ A row whose value is empty renders as nothing and Discord drops the blank line, 
 VRCNext knows little about quietly shrinks instead of filling with "Unknown"; Moderation lists
 only what you have actually done, so it disappears for a player you never moderated.
 
+Three switches — **Add the Activity field**, **Add the Moderation field** and **Add the Info
+field** — drop those cards from the plugin's own embed without writing one. They apply only while
+**Use a custom embed** is off and are hidden while it is on, because a club with its own embed
+deletes the field it does not want, and the field's name is theirs to change by then anyway.
+
 `{name}` is short for `{{ name }}`; the full template language (conditions, filters, `{% if %}`
 blocks) is in the plugin system's API reference. The VR template is separate because WayVR draws
 with a single font and shows nothing for emoji.
