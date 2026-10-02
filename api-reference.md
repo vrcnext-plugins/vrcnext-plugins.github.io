@@ -42,6 +42,7 @@ interface VrcnextPlugin<S> {
 | `native` | `NativeApi` | `native` |
 | `gameLog` | `GameLogApi` | `gamelog` |
 | `vrchat` | `VrchatApi` | `vrchat` |
+| `sql` | `SqlApi` | `sql` |
 | `deepLinks` | `DeepLinkApi` | `host:events` with `openDeepLink` in `events` |
 | `router` | `RouterApi` | `routes` |
 | `contextMenu` | `ContextMenuApi` | `context-menu` |
@@ -669,6 +670,42 @@ interface GameLogApi {
   history(signal?: AbortSignal): Promise<readonly GameLogEntry[]>;
 }
 ```
+
+## SQL
+
+`ctx.sql`, permission `sql`. Read-only SQL against VRCNext's own databases, for the questions
+the page cannot answer at any price — `getTimelineForUser` returns ten records, so how many
+times you have met someone, and how many records exist at all, are not in the page.
+
+Reach for it last. Everything VRCNext already holds is on `ctx.vrchat` and costs nothing; a
+query that duplicates a page read is a slower, staler copy of it.
+
+```ts
+type SqlValue = string | number | boolean | null | { readonly blobBytes: number };
+type SqlDatabase = 'vrcnext' | 'avatars';
+
+interface SqlApi {
+  query(database: SqlDatabase, sql: string, params?: readonly SqlValue[]): Promise<SqlResult>;
+  rows(database: SqlDatabase, sql: string, params?: readonly SqlValue[]): Promise<readonly SqlRow[]>;
+  value(database: SqlDatabase, sql: string, params?: readonly SqlValue[]): Promise<SqlValue | undefined>;
+  databases(): Promise<readonly SqlDatabaseInfo[]>;
+}
+```
+
+```ts
+const meets = await ctx.sql.value(
+  'vrcnext',
+  'SELECT meet_again_count FROM user_tracking WHERE user_id = ?1',
+  [userId],
+);
+```
+
+A plugin names an **alias**, never a path: the bridge owns which file each alias is. The
+connection is opened `SQLITE_OPEN_READ_ONLY` with `query_only` set, so a statement that asks to
+write is refused by SQLite itself. One statement per call — a trailing one is refused rather
+than silently dropped — and parameters are bound, never interpolated. Results are capped at
+10 000 rows and 8 MiB, a statement at 5 seconds, and a blob comes back as `{ blobBytes: n }`
+rather than as bytes. `value()` answers `undefined` when nothing matched, which is not `0`.
 
 ## Routes and deep links
 
