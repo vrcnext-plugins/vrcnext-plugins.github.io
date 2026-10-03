@@ -102,6 +102,10 @@ field** — drop those cards from the plugin's own embed without writing one. Th
 **Use a custom embed** is off and are hidden while it is on, because a club with its own embed
 deletes the field it does not want, and the field's name is theirs to change by then anyway.
 
+A fourth, **Count the person in the title**, drops the `for the 5th time` clause — the whole
+clause, not just the number, so the title does not end in a dangling "for the". Same rule: only
+while **Use a custom embed** is off.
+
 `{name}` is short for `{{ name }}`; the full template language (conditions, filters, `{% if %}`
 blocks) is in the plugin system's API reference. The VR template is separate because WayVR draws
 with a single font and shows nothing for emoji.
