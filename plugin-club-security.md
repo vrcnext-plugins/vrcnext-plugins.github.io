@@ -90,20 +90,27 @@ First line = title, rest = body. A line whose placeholders all came out empty is
 is why the rejoin line only appears for someone who has been in that instance before.
 
 The Discord embed is separate from that text and has its own editor. Out of the box it carries
-seven fields — Requirements, Avatar, Activity, Moderation, Info, Names and Recently — where
+eight fields — Requirements, Avatar, Activity, Moderation, Info, Languages, Names and Recently — where
 Activity, Moderation and Info mirror the cards VRCNext shows on a profile. Each field's value is an ordinary template over the
 raw variables below, so a club reorders the rows, rewords the labels or deletes a field outright.
 A row whose value is empty renders as nothing and Discord drops the blank line, so a profile
 VRCNext knows little about quietly shrinks instead of filling with "Unknown"; Moderation lists
 only what you have actually done, so it disappears for a player you never moderated.
 
-Four switches — **Add the Activity field**, **Add the Moderation field**, **Add the Info field**
-and **Add the Names field** — drop those fields from the plugin's own embed without writing one.
+Five switches — **Add the Activity field**, **Add the Moderation field**, **Add the Info field**,
+**Add the Names field** and **Add the Languages field** — turn those fields off and on in the
+plugin's own embed without writing one. Languages is the one that starts *off*, because the Info
+field already names them on a row of its own; the field is the version with a flag per line.
 They apply only while **Use a custom embed** is off and are hidden while it is on, because a club
 with its own embed deletes the field it does not want, and the field's name is theirs to change
 by then anyway.
 
-A fifth, **Count the person in the title**, drops the `for the 5th time` clause — the whole
+**Flags in front of the title** prefixes the flags of the languages they list:
+`🇩🇪 🇺🇸 "Spanjard" joined for the 1st time`. Off by default, and it adds nothing at all for a
+profile with no languages — or one listing only a sign language, which has no flag — so the
+title never starts with a stray space.
+
+**Count the person in the title** drops the `for the 5th time` clause — the whole
 clause, not just the number, so the title does not end in a dangling "for the". Same rule: only
 while **Use a custom embed** is off.
 
@@ -170,6 +177,7 @@ the field red rather than rendering as nothing an hour later.
 | How you know them | `meets` `meetsText` `timeTogether` `timeTogetherSeconds` `firstMet` `firstMetAgo` `firstMetSince` `lastSeenAgo` `lastSeenSince` `dbEntries` — VRCNext's own records of the two of you. `dbEntries` counts every row in its database that mentions them and needs the `sql` permission |
 | Names they went by | `nameHistoryText` `previousNames` `nameCount` — the names VRCNext recorded for them before this one, as bullet lines with the date each was last seen, as one comma-separated line, and as a count. Deeper with the database switch on, still present without it; see the caveat above. Empty for a player it has only ever seen under one name |
 | What you did to them | `blocked` `muted` `chatMuted` `avatarHidden` `interactOff`, each with an `…Emoji` — your own moderation, read from the lists VRCNext already holds. Empty, not `false`, when a list was never loaded |
+| Languages | `languageFlags` `languagesList` `languageCount` — the flags space separated for a title prefix, one line per language with its flag for a field, and how many they list. The flags are countries, not languages, and match VRCNext's own pairing (English is 🇺🇸); a language no single flag represents, and the sign languages, carry their name alone |
 | Who they are | `trustRank` `languages` `pronouns` `status` `statusText` `statusDescription` `note` `dateJoined` `joinedAgo` `joinedSince` `lastLoginAgo` `lastLoginSince` `lastActivityAgo` `lastActivitySince` `allowAvatarCopying` `allowAvatarCopyingText` |
 | Club | `preset` `inGroup` `inGroupText` `inGroupEmoji` |
 | What the preset asked for | `presetRequiredAge` `presetRequiredFriend` `presetRequiredPcRank` `presetRequiredQuestRank` `presetRequiredIosRank` `presetRequiredGroup` `presetRequiredTrustScore` — the floors this preset set, as opposed to what the joiner turned out to be. A requirement it does not check has no value, so a line naming one is dropped rather than printing "any" |

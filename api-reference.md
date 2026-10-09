@@ -140,6 +140,44 @@ be parsed is **left out** rather than sorted to 1970, since it cannot be placed 
 all. Use it instead of sorting a timeline yourself: `ctx.vrchat.userTimeline` arrives in no
 guaranteed order.
 
+## Languages
+
+```ts
+interface SpokenLanguage {
+  readonly tag: string;      // language_deu
+  readonly label: string;    // Deutsch
+  readonly flag?: string;    // 🇩🇪 — absent where no country stands for the language
+}
+
+const LANGUAGE_LABELS: Readonly<Record<string, string>>;
+const LANGUAGE_FLAGS: Readonly<Record<string, string>>;
+
+function spokenLanguages(tags: readonly string[] | undefined): readonly SpokenLanguage[];
+function languageLabels(tags: readonly string[] | undefined): readonly string[];
+function languageFlags(tags: readonly string[] | undefined): readonly string[];
+function languageFlag(tag: string): string | undefined;
+```
+
+A profile's spoken languages are **tags**, not the `languages` array beside them: VRChat sends
+`language_deu`, and VRCNext sends that array empty on every profile payload and builds its own
+pills from the tags. Pass `user.tags` to any of these; non-language tags are ignored.
+
+`spokenLanguages` is the one to reach for — a label and a flag per language, in profile order,
+from one source. `languageFlags` is the flags alone, skipping the unflagged ones, so the result
+is either a run of flags or empty and can be used as a prefix without a dangling separator.
+
+**The flags are countries, not languages**, and the pairing matches VRCNext's own table: English
+is 🇺🇸 rather than 🇬🇧, Portuguese 🇧🇷, Chinese 🇨🇳, Arabic 🇸🇦. It is a display convention, not a
+fact about a speaker. Languages whose speakers no single flag represents — Bengali, Telugu,
+Cantonese, Wu, Scots — carry a label and no flag, as do the sign languages and Toki Pona. A tag
+in neither table falls back to its upper-cased code, so a language VRChat adds later degrades
+instead of disappearing.
+
+Two notes where this deviates from the app. VRCNext names 28 tags; 48 are in active use, so
+Italian, Croatian, Greek, Bulgarian and others that it renders as a bare `ITA` are named here.
+And VRCNext labels `dse` as `DGS` — but ISO 639-3 `dse` is **Dutch** Sign Language and `DGS` is
+the German one, `gsg`; both are named correctly here.
+
 ## Templates
 
 ```ts
