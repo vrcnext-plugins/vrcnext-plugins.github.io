@@ -170,8 +170,7 @@ All three lists come back **alphabetically by label**, not in the order the prof
 tags. A profile's order is whatever it was filled in as, which puts the same two languages in
 different orders on two profiles and leaves a row of flags out of step with a list of names
 elsewhere in the same message. By label rather than by tag, because the label is what a reader
-sees: `日本語`
-sorts by its own text, not where `jpn` would put it.
+sees: `日本語` sorts by its own text, not where `jpn` would put it.
 
 **The flags are countries, not languages**, and the pairing matches VRCNext's own table: English
 is 🇺🇸 rather than 🇬🇧, Portuguese 🇧🇷, Chinese 🇨🇳, Arabic 🇸🇦. It is a display convention, not a
@@ -179,6 +178,10 @@ fact about a speaker. Languages whose speakers no single flag represents — Ben
 Cantonese, Wu, Scots — carry a label and no flag, as do the sign languages and Toki Pona. A tag
 in neither table falls back to its upper-cased code, so a language VRChat adds later degrades
 instead of disappearing.
+
+`language_zxx` is ISO 639-2's "no linguistic content", carried by a small number of real
+profiles; it is labelled `No language` rather than left as the bare code, and named for what the
+standard says rather than for any guess about why someone set it.
 
 Two notes where this deviates from the app. VRCNext names 28 tags; 48 are in active use, so
 Italian, Croatian, Greek, Bulgarian and others that it renders as a bare `ITA` are named here.
