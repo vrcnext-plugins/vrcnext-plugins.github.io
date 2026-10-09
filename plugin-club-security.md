@@ -90,21 +90,37 @@ First line = title, rest = body. A line whose placeholders all came out empty is
 is why the rejoin line only appears for someone who has been in that instance before.
 
 The Discord embed is separate from that text and has its own editor. Out of the box it carries
-six fields — Requirements, Avatar, Activity, Moderation, Info and Recently — where the last four
-mirror the cards VRCNext shows on a profile. Each field's value is an ordinary template over the
+seven fields — Requirements, Avatar, Activity, Moderation, Info, Names and Recently — where
+Activity, Moderation and Info mirror the cards VRCNext shows on a profile. Each field's value is an ordinary template over the
 raw variables below, so a club reorders the rows, rewords the labels or deletes a field outright.
 A row whose value is empty renders as nothing and Discord drops the blank line, so a profile
 VRCNext knows little about quietly shrinks instead of filling with "Unknown"; Moderation lists
 only what you have actually done, so it disappears for a player you never moderated.
 
-Three switches — **Add the Activity field**, **Add the Moderation field** and **Add the Info
-field** — drop those cards from the plugin's own embed without writing one. They apply only while
-**Use a custom embed** is off and are hidden while it is on, because a club with its own embed
-deletes the field it does not want, and the field's name is theirs to change by then anyway.
+Four switches — **Add the Activity field**, **Add the Moderation field**, **Add the Info field**
+and **Add the Names field** — drop those fields from the plugin's own embed without writing one.
+They apply only while **Use a custom embed** is off and are hidden while it is on, because a club
+with its own embed deletes the field it does not want, and the field's name is theirs to change
+by then anyway.
 
-A fourth, **Count the person in the title**, drops the `for the 5th time` clause — the whole
+A fifth, **Count the person in the title**, drops the `for the 5th time` clause — the whole
 clause, not just the number, so the title does not end in a dangling "for the". Same rule: only
 while **Use a custom embed** is off.
+
+### Names is a weaker claim than it looks
+
+VRChat publishes no name history, and VRCNext keeps one current display name per player and
+records no rename. What the Names field shows is incidental: every instance record VRCNext wrote
+kept a copy of the name the player carried **at that moment**, so the distinct names across their
+records are the ones VRCNext happened to witness — while you were in an instance with them, since
+it started recording, on this machine. A rename between two of your meetings leaves no trace, and
+a player you met once has no history at all.
+
+It therefore needs the `sql` permission, and is empty both for a player who has never renamed and
+for one whose renames nobody saw. Those two are not the same thing, and nothing can tell them
+apart, which is why the field says nothing rather than "no previous names". The current name is
+left out — it is already the title and the author line — so the field disappears entirely for
+most people, and appears for the ones worth a second look.
 
 `{name}` is short for `{{ name }}`; the full template language (conditions, filters, `{% if %}`
 blocks) is in the plugin system's API reference. The VR template is separate because WayVR draws
@@ -122,6 +138,7 @@ the field red rather than rendering as nothing an hour later.
 | Avatar | `avatar` `avatarId` `avatarImageUrl` `avatarLink` `avatarPlain` `ranksText` `pcRank` `pcRankText` `pcRankEmoji` `questRank` `questRankText` `questRankEmoji` `iosRank` `iosRankText` `iosRankEmoji` — `ranksText` lists one line per platform the avatar is built for, so a platform it has no build for is left out rather than reported as unknown |
 | Activity | `logText` — the player's recent records as Discord lines |
 | How you know them | `meets` `meetsText` `timeTogether` `timeTogetherSeconds` `firstMet` `firstMetAgo` `firstMetSince` `lastSeenAgo` `lastSeenSince` `dbEntries` — VRCNext's own records of the two of you. `dbEntries` counts every row in its database that mentions them and needs the `sql` permission |
+| Names they went by | `nameHistoryText` `previousNames` `nameCount` — the names VRCNext recorded for them before this one, as bullet lines with the date each was last seen, as one comma-separated line, and as a count. Needs the `sql` permission; see the caveat above. Empty for a player it has only ever seen under one name |
 | What you did to them | `blocked` `muted` `chatMuted` `avatarHidden` `interactOff`, each with an `…Emoji` — your own moderation, read from the lists VRCNext already holds. Empty, not `false`, when a list was never loaded |
 | Who they are | `trustRank` `languages` `pronouns` `status` `statusText` `statusDescription` `note` `dateJoined` `joinedAgo` `joinedSince` `lastLoginAgo` `lastLoginSince` `lastActivityAgo` `lastActivitySince` `allowAvatarCopying` `allowAvatarCopyingText` |
 | Club | `preset` `inGroup` `inGroupText` `inGroupEmoji` |
@@ -150,6 +167,7 @@ Everything goes through `ctx.vrchat`, which reads VRCNext's data **without openi
 | Trust score | The profile score VRChat stopped showing, rebuilt from account age, 18+ status, a bio and groups joined. Asked for with the **Trust score at least** slider; at 0 nothing is checked and the score is left out of the report. | Badges and uploaded content are not in what VRCNext pushes, so they are left out of the total rather than counted as failures. A profile that could not be read is unverified, never a failure. |
 | Recent activity | VRCNext's timeline, worded by the plugin system: `Blocked by you`, ``Met again in `Jellybean #52792` (Friends+)``, `Friend request from **X**`. Every arrival at one instance is one line with a `×2`, a group instance names its group when VRCNext knows it, and the last row is the oldest record there is — usually the day you met — with a `...` row above it for what sits between. | A timeline read returns **ten records**, so without the `sql` permission the log and its pinned oldest row reach back only that far. With it, the pinned row is VRCNext's genuinely oldest record. |
 | Activity, Moderation and Info | The profile payload VRCNext already sends, plus the moderation lists it keeps in the page. No extra lookup. | `dbEntries` is the exception and needs `sql`. A value VRCNext does not have renders empty, so the row — and an all-empty field — is dropped rather than printing "Unknown". |
+| Names they went by | The name each of VRCNext's own instance records kept at the time, grouped per distinct name and dated by the record. One indexed read over `ctx.sql`. | Needs `sql`, and only covers names VRCNext itself witnessed — not a name history from VRChat, which publishes none. `event_players.joined_at` is empty on nearly every row, so the dates come from the event, not the row. |
 | Rejoin | VRCNext's timeline: the player's ten most recent events, each with its location. Yes when one of them is this exact instance (same world **and** instance id) from before this join. | Survives restarts and reaches back to when VRCNext was installed, but only ten events deep per player. |
 
 Each lookup runs in parallel and degrades to "unknown" on its own timeout rather than holding up
