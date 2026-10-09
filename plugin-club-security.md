@@ -116,11 +116,41 @@ records are the ones VRCNext happened to witness — while you were in an instan
 it started recording, on this machine. A rename between two of your meetings leaves no trace, and
 a player you met once has no history at all.
 
-It therefore needs the `sql` permission, and is empty both for a player who has never renamed and
+Two sources answer it, and the switch decides which. **Off**, the names come from the players on
+the ten timeline records a report already fetched — free, and enough to reveal a rename for most
+players who have ever renamed, but nobody's whole history: a player whose renames are spread over
+years of records shows one name where the database shows eight. **On**, the same question is asked
+of every record there is.
+
+It is empty both for a player who has never renamed and
 for one whose renames nobody saw. Those two are not the same thing, and nothing can tell them
 apart, which is why the field says nothing rather than "no previous names". The current name is
 left out — it is already the title and the author line — so the field disappears entirely for
 most people, and appears for the ones worth a second look.
+
+## The database switch
+
+**Read VRCNext's database for the full picture**, in the plugin's own settings, is off by default
+and asks for the optional `sql` permission the moment you turn it on. Decline, or leave it off,
+and nothing breaks: every fact behind it has a free source in what VRCNext already holds in the
+page, and the reports get shallower rather than wrong.
+
+Why there are two sources at all: VRCNext answers `getTimelineForUser` with **ten records** —
+hardcoded, the mini-timeline its own profile modal draws — and the page caches only the window it
+has fetched. Anything that counts a whole history is therefore unanswerable from the page at any
+cost, which is the only reason the database is read.
+
+| Fact | Switch off | Switch on |
+| :--- | :--- | :--- |
+| Names they went by | The names on the players of those ten records. Reveals a rename for most players who have renamed, to whatever depth ten records reach | Every name in every record, each dated |
+| Activity log, and its pinned oldest line | The oldest of the ten records | VRCNext's genuinely oldest record — usually the day you met |
+| `eventCount` / `eventOrdinal`, the count in the title | Instances among those ten, so it stops climbing at ten | Every instance VRCNext ever recorded them in |
+| `dbEntries` | **Left out.** A count of the whole database has no cheaper substitute, and a floor of "at least ten" would say nothing | Every row that mentions them |
+| Everything else — requirements, avatar, ranks, trust, moderation, Info, `meets`, `firstMet`, `timeTogether` | Unaffected: all of it is on the payload VRCNext already sent, or in the lists it keeps in the page | Identical |
+
+The access is read-only and local. The bridge opens the file `SQLITE_OPEN_READ_ONLY` with
+`query_only` set, so a statement that asks to write is refused by SQLite itself; VRChat is never
+asked anything, and nothing leaves the machine that was not already going to Discord.
 
 `{name}` is short for `{{ name }}`; the full template language (conditions, filters, `{% if %}`
 blocks) is in the plugin system's API reference. The VR template is separate because WayVR draws
@@ -138,7 +168,7 @@ the field red rather than rendering as nothing an hour later.
 | Avatar | `avatar` `avatarId` `avatarImageUrl` `avatarLink` `avatarPlain` `ranksText` `pcRank` `pcRankText` `pcRankEmoji` `questRank` `questRankText` `questRankEmoji` `iosRank` `iosRankText` `iosRankEmoji` — `ranksText` lists one line per platform the avatar is built for, so a platform it has no build for is left out rather than reported as unknown |
 | Activity | `logText` — the player's recent records as Discord lines |
 | How you know them | `meets` `meetsText` `timeTogether` `timeTogetherSeconds` `firstMet` `firstMetAgo` `firstMetSince` `lastSeenAgo` `lastSeenSince` `dbEntries` — VRCNext's own records of the two of you. `dbEntries` counts every row in its database that mentions them and needs the `sql` permission |
-| Names they went by | `nameHistoryText` `previousNames` `nameCount` — the names VRCNext recorded for them before this one, as bullet lines with the date each was last seen, as one comma-separated line, and as a count. Needs the `sql` permission; see the caveat above. Empty for a player it has only ever seen under one name |
+| Names they went by | `nameHistoryText` `previousNames` `nameCount` — the names VRCNext recorded for them before this one, as bullet lines with the date each was last seen, as one comma-separated line, and as a count. Deeper with the database switch on, still present without it; see the caveat above. Empty for a player it has only ever seen under one name |
 | What you did to them | `blocked` `muted` `chatMuted` `avatarHidden` `interactOff`, each with an `…Emoji` — your own moderation, read from the lists VRCNext already holds. Empty, not `false`, when a list was never loaded |
 | Who they are | `trustRank` `languages` `pronouns` `status` `statusText` `statusDescription` `note` `dateJoined` `joinedAgo` `joinedSince` `lastLoginAgo` `lastLoginSince` `lastActivityAgo` `lastActivitySince` `allowAvatarCopying` `allowAvatarCopyingText` |
 | Club | `preset` `inGroup` `inGroupText` `inGroupEmoji` |
@@ -166,8 +196,8 @@ Everything goes through `ctx.vrchat`, which reads VRCNext's data **without openi
 | Friendship | Your friend list. | — |
 | Trust score | The profile score VRChat stopped showing, rebuilt from account age, 18+ status, a bio and groups joined. Asked for with the **Trust score at least** slider; at 0 nothing is checked and the score is left out of the report. | Badges and uploaded content are not in what VRCNext pushes, so they are left out of the total rather than counted as failures. A profile that could not be read is unverified, never a failure. |
 | Recent activity | VRCNext's timeline, worded by the plugin system: `Blocked by you`, ``Met again in `Jellybean #52792` (Friends+)``, `Friend request from **X**`. Every arrival at one instance is one line with a `×2`, a group instance names its group when VRCNext knows it, and the last row is the oldest record there is — usually the day you met — with a `...` row above it for what sits between. | A timeline read returns **ten records**, so without the `sql` permission the log and its pinned oldest row reach back only that far. With it, the pinned row is VRCNext's genuinely oldest record. |
-| Activity, Moderation and Info | The profile payload VRCNext already sends, plus the moderation lists it keeps in the page. No extra lookup. | `dbEntries` is the exception and needs `sql`. A value VRCNext does not have renders empty, so the row — and an all-empty field — is dropped rather than printing "Unknown". |
-| Names they went by | The name each of VRCNext's own instance records kept at the time, grouped per distinct name and dated by the record. One indexed read over `ctx.sql`. | Needs `sql`, and only covers names VRCNext itself witnessed — not a name history from VRChat, which publishes none. `event_players.joined_at` is empty on nearly every row, so the dates come from the event, not the row. |
+| Activity, Moderation and Info | The profile payload VRCNext already sends, plus the moderation lists it keeps in the page. No extra lookup. | `dbEntries` is the exception: it is a count of the whole database, so it has no cheaper substitute and is simply left out without the switch. A value VRCNext does not have renders empty, so the row — and an all-empty field — is dropped rather than printing "Unknown". |
+| Names they went by | The name each instance record kept at the time: from the players on the ten timeline records for free, or from every record there is with the database switch on. One indexed read either way. | Only names VRCNext itself witnessed — not a name history from VRChat, which publishes none. Without the database the depth is whatever those ten records cover. `event_players.joined_at` is empty on nearly every row, so the dates come from the player's own arrival, not that column. |
 | Rejoin | VRCNext's timeline: the player's ten most recent events, each with its location. Yes when one of them is this exact instance (same world **and** instance id) from before this join. | Survives restarts and reaches back to when VRCNext was installed, but only ten events deep per player. |
 
 Each lookup runs in parallel and degrades to "unknown" on its own timeout rather than holding up
@@ -204,6 +234,12 @@ Flat, like every plugin: `plugin.json`, `main.ts`, `src/`. The manifest declares
 and world changes), `vrchat` (the read-only data above), `notifications` (toast, Windows tray
 toast), `native` (bridge targets) and `network` with `discord.com` as its only host. No VRCNext
 actions and no raw events: the `vrchat` capability covers everything this plugin reads.
+
+`sql` is **optional**, not declared: the plugin never touches the database unless you turn
+**Read VRCNext's database for the full picture** on, which is when it asks. Decline and nothing
+breaks — every fact behind it falls back to what VRCNext is already holding in the page, and the
+reports get shorter rather than wrong. Revoke it later from the permissions panel and the switch
+turns itself back off at the next change rather than pretending it still has access.
 
 ## Installing
 
