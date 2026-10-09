@@ -40,16 +40,25 @@ The verdict reaches your templates as `{result}`, `{resultText}`, `{resultEmoji}
 
 ## The Actions card
 
-Three buttons on the Club Security tab, each running the presets you have enabled:
+Four buttons on the Club Security tab, each running the presets you have enabled:
 
 | Button | What it does | Sends? |
 | :--- | :--- | :--- |
 | **Test me** | Runs *your own* account through every enabled preset, bypassing the self check and the exception list that normally keep you out of reports. With VRChat closed it uses the last instance VRCNext recorded you in, and a clearly fake `Example World` when it has none. | Yes |
 | **Check everyone here** | Every player in your instance against every enabled preset, up to twelve. The door check: who in this room would the rules have turned away? | No — panel only |
 | **Replay last join** | The last player VRCNext recorded, through every preset, to their channels. Works with VRChat closed. | Yes |
+| **Replay last avatar switch** | The same player, reported as though they had just switched into the avatar they are wearing — the avatar report rather than the join one. Works with VRChat closed. | Yes |
 
-All three ignore the instance filters: a preset that would not have watched this instance still
-says what it would have said, and notes that in the log. Hover a button for the detail.
+They ignore the instance filters: a preset that would not have watched this instance still says
+what it would have said, and notes that in the log. Hover a button for the detail.
+
+**Replay last avatar switch** keeps two conditions the others drop, because they decide whether
+a live switch is reported at all: the preset has **Warn when someone here switches avatar** on,
+and it sets a PC, Quest or iOS rank floor for the check to judge against. With either missing the
+button says which one instead of sending. Nothing stores a switch to replay literally — VRChat's
+log never mentions another player changing avatar, so one exists only while the plugin is
+watching an instance — so what this exercises is the avatar report itself: its own wording, its
+own channels, and only the rank checks, against a real player and a real avatar.
 
 **Test me** delivers to the channels, because "how would I be treated" includes the
 notification — a desktop toast that never arrives and a webhook that stays silent are exactly
