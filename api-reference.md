@@ -162,9 +162,16 @@ A profile's spoken languages are **tags**, not the `languages` array beside them
 `language_deu`, and VRCNext sends that array empty on every profile payload and builds its own
 pills from the tags. Pass `user.tags` to any of these; non-language tags are ignored.
 
-`spokenLanguages` is the one to reach for — a label and a flag per language, in profile order,
-from one source. `languageFlags` is the flags alone, skipping the unflagged ones, so the result
-is either a run of flags or empty and can be used as a prefix without a dangling separator.
+`spokenLanguages` is the one to reach for — a label and a flag per language, from one source.
+`languageFlags` is the flags alone, skipping the unflagged ones, so the result is either a run of
+flags or empty and can be used as a prefix without a dangling separator.
+
+All three lists come back **alphabetically by label**, not in the order the profile lists its
+tags. A profile's order is whatever it was filled in as, which puts the same two languages in
+different orders on two profiles and leaves a row of flags out of step with a list of names
+elsewhere in the same message. By label rather than by tag, because the label is what a reader
+sees: `日本語`
+sorts by its own text, not where `jpn` would put it.
 
 **The flags are countries, not languages**, and the pairing matches VRCNext's own table: English
 is 🇺🇸 rather than 🇬🇧, Portuguese 🇧🇷, Chinese 🇨🇳, Arabic 🇸🇦. It is a display convention, not a

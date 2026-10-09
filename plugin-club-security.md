@@ -115,9 +115,13 @@ with its own embed deletes the field it does not want, and the field's name is t
 by then anyway.
 
 **Flags in front of the title** prefixes the flags of the languages they list:
-`🇩🇪 🇺🇸 "Spanjard" joined for the 1st time`. Off by default, and it adds nothing at all for a
+`🇩🇪 🇺🇸 "Spanjard" joined for the 1st time`. On by default, and it adds nothing at all for a
 profile with no languages — or one listing only a sign language, which has no flag — so the
 title never starts with a stray space.
+
+Both the flags and the Languages field are in alphabetical order, so the flags in the title and
+the names in the field below are in the same order, and two profiles that list the same
+languages read the same way whatever order they typed them in.
 
 **Count the person in the title** drops the `for the 5th time` clause — the whole
 clause, not just the number, so the title does not end in a dangling "for the". Same rule: only
